@@ -25,7 +25,8 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^`).
+Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
+lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
 > Exe belum ditandatangani, jadi Windows SmartScreen bisa menampilkan peringatan.
 > Klik **More info → Run anyway**.
@@ -36,7 +37,7 @@ Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^`).
 |---|---|
 | Arahkan kursor ke pill | Panel terbuka |
 | Jauhkan kursor | Panel menutup (delay ~0,3 detik) |
-| Klik album art / progress bar | Seek ke posisi tersebut |
+| Klik progress bar | Seek ke posisi tersebut |
 | Klik ikon tray | Buka menu pengaturan |
 | Klik dua kali ikon tray | Sembunyikan/tampilkan island |
 
