@@ -65,6 +65,10 @@ public sealed class TrayService : IDisposable
 
         menu.Items.Add(new Forms.ToolStripSeparator());
 
+        var settingsItem = new Forms.ToolStripMenuItem("Settings...");
+        settingsItem.Click += (_, _) => _window.ShowSettings();
+        menu.Items.Add(settingsItem);
+
         var aboutItem = new Forms.ToolStripMenuItem("About Dynamic Island");
         aboutItem.Click += (_, _) => _window.ShowAbout();
         menu.Items.Add(aboutItem);

@@ -10,9 +10,11 @@ public partial class MainWindow : Window
 {
     private readonly SettingsService _settings;
     private readonly FullscreenWatcher _fullscreen;
+    private readonly FocusService _focus;
     private readonly IslandView _island;
 
     private HwndSource? _source;
+    private SettingsWindow? _settingsWindow;
     private bool _userHidden;
     private bool _fullscreenHidden;
 
@@ -23,14 +25,17 @@ public partial class MainWindow : Window
         BrightnessService brightness,
         BatteryService battery,
         NetworkService network,
-        FullscreenWatcher fullscreen)
+        FullscreenWatcher fullscreen,
+        FocusService focus)
     {
         _settings = settings;
         _fullscreen = fullscreen;
+        _focus = focus;
 
         InitializeComponent();
 
-        _island = new IslandView(settings, media, audio, brightness, battery, network);
+        _island = new IslandView(settings, media, audio, brightness, battery, network, focus);
+        _island.SettingsRequested += ShowSettings;
         IslandHost.Children.Add(_island);
 
         SourceInitialized += OnSourceInitialized;
@@ -81,6 +86,7 @@ public partial class MainWindow : Window
 
     private void OnClosed(object? sender, EventArgs e)
     {
+        _island.SettingsRequested -= ShowSettings;
         _fullscreen.Changed -= OnFullscreenChanged;
         _source?.RemoveHook(WndProc);
     }
@@ -253,6 +259,20 @@ public partial class MainWindow : Window
                 ShowIsland();
             }
         }
+    }
+
+    public void ShowSettings()
+    {
+        if (_settingsWindow is { IsLoaded: true })
+        {
+            _settingsWindow.Activate();
+            return;
+        }
+
+        _settingsWindow = new SettingsWindow(_settings, this);
+        _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow.Show();
+        _settingsWindow.Activate();
     }
 
     public void ShowAbout()

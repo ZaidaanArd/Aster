@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignWidth="500"
-             d:DesignHeight="214"
+             d:DesignHeight="252"
              Width="260"
              Height="40"
              Focusable="False"
@@ -28,7 +28,7 @@
                 CornerRadius="0,0,22,22"
                 ClipToBounds="True">
             <Grid>
-                <!-- Collapsed: clock + mascot -->
+                <!-- Collapsed: clock / timer / mascot -->
                 <Grid x:Name="CollapsedLayer" VerticalAlignment="Top" IsHitTestVisible="False">
                     <Grid Height="40">
                         <TextBlock x:Name="ClockText"
@@ -93,10 +93,10 @@
                     </Grid>
                 </Grid>
 
-                <!-- Expanded: media -->
+                <!-- Expanded panel -->
                 <Grid x:Name="ExpandedLayer"
                       Width="464"
-                      Height="178"
+                      Height="216"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Top"
                       Margin="0,18,0,0"
@@ -105,9 +105,11 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="18" />
                         <RowDefinition Height="*" />
-                        <RowDefinition Height="20" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="28" />
                     </Grid.RowDefinitions>
 
+                    <!-- Header -->
                     <Grid Grid.Row="0">
                         <TextBlock x:Name="DateText"
                                    FontFamily="{StaticResource UiFont}"
@@ -147,118 +149,125 @@
                         </StackPanel>
                     </Grid>
 
-                    <Grid Grid.Row="1" Margin="0,10,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="84" />
-                            <ColumnDefinition Width="16" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                    <!-- Music / Focus content -->
+                    <Grid Grid.Row="1" Margin="0,8,0,4">
+                        <Grid x:Name="MusicPanel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="84" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <Border x:Name="ArtBorder"
-                                Width="84"
-                                Height="84"
-                                CornerRadius="18"
-                                ClipToBounds="True"
-                                VerticalAlignment="Center">
-                            <Border.Background>
-                                <ImageBrush x:Name="ArtBrush" Stretch="UniformToFill" />
-                            </Border.Background>
-                            <Grid>
-                                <Border x:Name="ArtFallback" CornerRadius="18">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#2B2A46" Offset="0" />
-                                            <GradientStop Color="#15151E" Offset="1" />
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                </Border>
-                                <TextBlock x:Name="ArtGlyph"
-                                           Text="&#xE8D6;"
-                                           FontFamily="{StaticResource GlyphFont}"
-                                           FontSize="30"
-                                           Foreground="#66FFFFFF"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
-                            </Grid>
-                        </Border>
+                            <Border x:Name="ArtBorder"
+                                    Width="84"
+                                    Height="84"
+                                    CornerRadius="18"
+                                    ClipToBounds="True"
+                                    VerticalAlignment="Center">
+                                <Border.Background>
+                                    <ImageBrush x:Name="ArtBrush" Stretch="UniformToFill" />
+                                </Border.Background>
+                                <Grid>
+                                    <Border x:Name="ArtFallback" CornerRadius="18">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#2B2A46" Offset="0" />
+                                                <GradientStop Color="#15151E" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+                                    <TextBlock x:Name="ArtGlyph"
+                                               Text="&#xE8D6;"
+                                               FontFamily="{StaticResource GlyphFont}"
+                                               FontSize="30"
+                                               Foreground="#66FFFFFF"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
 
-                        <Grid Grid.Column="2" VerticalAlignment="Center">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                            <Grid Grid.Column="2" VerticalAlignment="Center">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
 
-                            <TextBlock x:Name="TitleText"
-                                       Grid.Row="0"
-                                       Style="{StaticResource TitleText}"
-                                       FontSize="17"
-                                       FontWeight="SemiBold"
-                                       Text="Nothing playing" />
-                            <TextBlock x:Name="ArtistText"
-                                       Grid.Row="1"
-                                       Style="{StaticResource SubtitleText}"
-                                       FontSize="11.5"
-                                       Margin="0,2,0,0"
-                                       Text="Start something on Spotify, YouTube, or Apple Music" />
+                                <TextBlock x:Name="TitleText"
+                                           Grid.Row="0"
+                                           Style="{StaticResource TitleText}"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           Text="Nothing playing" />
+                                <TextBlock x:Name="ArtistText"
+                                           Grid.Row="1"
+                                           Style="{StaticResource SubtitleText}"
+                                           FontSize="11.5"
+                                           Margin="0,2,0,0"
+                                           Text="Start something on Spotify, YouTube, or Apple Music" />
 
-                            <Grid x:Name="ProgressHit"
-                                  Grid.Row="2"
-                                  Height="14"
-                                  Margin="0,9,0,0"
-                                  Background="Transparent"
-                                  Cursor="Hand"
-                                  MouseLeftButtonDown="OnProgressMouseDown"
-                                  SizeChanged="OnProgressSizeChanged">
-                                <Border Height="4"
-                                        CornerRadius="2"
-                                        Background="{StaticResource TrackBrush}"
-                                        VerticalAlignment="Center" />
-                                <Border x:Name="ProgressFill"
-                                        Height="4"
-                                        CornerRadius="2"
-                                        Background="#F2FFFFFF"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Center"
-                                        Width="0" />
-                            </Grid>
+                                <Grid x:Name="ProgressHit"
+                                      Grid.Row="2"
+                                      Height="14"
+                                      Margin="0,9,0,0"
+                                      Background="Transparent"
+                                      Cursor="Hand"
+                                      MouseLeftButtonDown="OnProgressMouseDown"
+                                      SizeChanged="OnProgressSizeChanged">
+                                    <Border Height="4"
+                                            CornerRadius="2"
+                                            Background="{StaticResource TrackBrush}"
+                                            VerticalAlignment="Center" />
+                                    <Border x:Name="ProgressFill"
+                                            Height="4"
+                                            CornerRadius="2"
+                                            Background="#F2FFFFFF"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"
+                                            Width="0" />
+                                </Grid>
 
-                            <Grid Grid.Row="3" Margin="0,5,0,0">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                    <Button x:Name="PrevButton"
-                                            Style="{StaticResource GlyphButton}"
-                                            Click="OnPreviousClick"
-                                            ToolTip="Previous">
-                                        <TextBlock Text="&#xE892;"
-                                                   FontFamily="{StaticResource GlyphFont}"
-                                                   FontSize="13" />
-                                    </Button>
-                                    <Button x:Name="PlayButton"
-                                            Style="{StaticResource PlayButton}"
-                                            Margin="8,0"
-                                            Click="OnPlayPauseClick"
-                                            ToolTip="Play / pause">
-                                        <TextBlock x:Name="PlayGlyph"
-                                                   Text="&#xE768;"
-                                                   FontFamily="{StaticResource GlyphFont}"
-                                                   FontSize="13"
-                                                   Margin="1,0,0,0" />
-                                    </Button>
-                                    <Button x:Name="NextButton"
-                                            Style="{StaticResource GlyphButton}"
-                                            Click="OnNextClick"
-                                            ToolTip="Next">
-                                        <TextBlock Text="&#xE893;"
-                                                   FontFamily="{StaticResource GlyphFont}"
-                                                   FontSize="13" />
-                                    </Button>
-                                </StackPanel>
+                                <Grid Grid.Row="3" Margin="0,5,0,0">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                        <Button x:Name="PrevButton"
+                                                Style="{StaticResource GlyphButton}"
+                                                Click="OnPreviousClick"
+                                                ToolTip="Previous">
+                                            <TextBlock Text="&#xE892;"
+                                                       FontFamily="{StaticResource GlyphFont}"
+                                                       FontSize="13" />
+                                        </Button>
+                                        <Button x:Name="PlayButton"
+                                                Style="{StaticResource PlayButton}"
+                                                Margin="8,0"
+                                                Click="OnPlayPauseClick"
+                                                ToolTip="Play / pause">
+                                            <TextBlock x:Name="PlayGlyph"
+                                                       Text="&#xE768;"
+                                                       FontFamily="{StaticResource GlyphFont}"
+                                                       FontSize="13"
+                                                       Margin="1,0,0,0" />
+                                        </Button>
+                                        <Button x:Name="NextButton"
+                                                Style="{StaticResource GlyphButton}"
+                                                Click="OnNextClick"
+                                                ToolTip="Next">
+                                            <TextBlock Text="&#xE893;"
+                                                       FontFamily="{StaticResource GlyphFont}"
+                                                       FontSize="13" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
                             </Grid>
                         </Grid>
+
+                        <!-- Focus timer hosted here; the FocusView is added in code-behind -->
+                        <Grid x:Name="FocusHost" Visibility="Collapsed" />
                     </Grid>
 
-                    <Grid Grid.Row="2">
+                    <!-- Music footer -->
+                    <Grid x:Name="MusicFooter" Grid.Row="2">
                         <TextBlock x:Name="FooterText"
                                    FontFamily="{StaticResource UiFont}"
                                    FontSize="10"
@@ -278,9 +287,63 @@
                                        Foreground="{StaticResource TextSecondary}" />
                         </StackPanel>
                     </Grid>
+
+                    <!-- Tab bar -->
+                    <Border Grid.Row="3"
+                            BorderBrush="#14FFFFFF"
+                            BorderThickness="0,1,0,0">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Grid Margin="2,0">
+                                    <RadioButton x:Name="MusicTab"
+                                                 Style="{StaticResource TabButton}"
+                                                 GroupName="IslandTabs"
+                                                 IsChecked="True"
+                                                 Click="OnMusicTabClick"
+                                                 ToolTip="Music">
+                                        <TextBlock Text="&#xE8D6;"
+                                                   FontFamily="{StaticResource GlyphFont}"
+                                                   FontSize="13" />
+                                    </RadioButton>
+                                </Grid>
+                                <Grid Margin="2,0">
+                                    <RadioButton x:Name="FocusTab"
+                                                 Style="{StaticResource TabButton}"
+                                                 GroupName="IslandTabs"
+                                                 Click="OnFocusTabClick"
+                                                 ToolTip="Focus timer">
+                                        <TextBlock Text="&#xE916;"
+                                                   FontFamily="{StaticResource GlyphFont}"
+                                                   FontSize="13" />
+                                    </RadioButton>
+                                    <Ellipse x:Name="FocusTabDot"
+                                             Width="5"
+                                             Height="5"
+                                             Fill="{StaticResource FocusAccent}"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Top"
+                                             Margin="0,2,3,0"
+                                             Opacity="0"
+                                             IsHitTestVisible="False" />
+                                </Grid>
+                            </StackPanel>
+
+                            <Button x:Name="SettingsButton"
+                                    Style="{StaticResource GlyphButton}"
+                                    Width="28"
+                                    Height="24"
+                                    HorizontalAlignment="Right"
+                                    Click="OnSettingsClick"
+                                    ToolTip="Settings">
+                                <TextBlock Text="&#xE713;"
+                                           FontFamily="{StaticResource GlyphFont}"
+                                           FontSize="12" />
+                            </Button>
+                        </Grid>
+                    </Border>
                 </Grid>
 
-                <!-- Volume / brightness / charging toast -->
+                <!-- Volume / brightness / charging / focus toast -->
                 <Border x:Name="ToastBorder"
                         Width="212"
                         HorizontalAlignment="Center"

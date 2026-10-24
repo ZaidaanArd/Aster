@@ -11,14 +11,22 @@ using DynamicIsland.Services;
 
 namespace DynamicIsland.Controls;
 
+public enum PanelMode
+{
+    Music,
+    Focus
+}
+
 public partial class IslandView : UserControl
 {
     private const double ExpandedWidth = 500;
-    private const double ExpandedHeight = 214;
+    private const double ExpandedHeight = 252;
 
     private static readonly Brush GreenBrush = new SolidColorBrush(Color.FromRgb(0x32, 0xD7, 0x4B));
     private static readonly Brush OrangeBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0x9F, 0x0A));
     private static readonly Brush WhiteBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF7));
+    private static readonly Brush FocusBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0xB8, 0x6B));
+    private static readonly Brush FocusPausedBrush = new SolidColorBrush(Color.FromArgb(0x99, 0xFF, 0xB8, 0x6B));
 
     private readonly SettingsService _settings;
     private readonly MediaService _media;
@@ -26,6 +34,8 @@ public partial class IslandView : UserControl
     private readonly BrightnessService _brightness;
     private readonly BatteryService _battery;
     private readonly NetworkService _network;
+    private readonly FocusService _focus;
+    private readonly FocusView _focusView;
 
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _hoverTimer;
@@ -58,6 +68,11 @@ public partial class IslandView : UserControl
     private long _lastFrameTicks;
 
     private DateTime _lastActivity = DateTime.Now;
+    private PanelMode _mode = PanelMode.Music;
+    private int _lastFocusSecond = -1;
+    private bool _wasFocusRunning;
+
+    public event Action? SettingsRequested;
 
     public IslandView(
         SettingsService settings,
@@ -65,7 +80,8 @@ public partial class IslandView : UserControl
         AudioService audio,
         BrightnessService brightness,
         BatteryService battery,
-        NetworkService network)
+        NetworkService network,
+        FocusService focus)
     {
         _settings = settings;
         _media = media;
@@ -73,8 +89,12 @@ public partial class IslandView : UserControl
         _brightness = brightness;
         _battery = battery;
         _network = network;
+        _focus = focus;
 
         InitializeComponent();
+
+        _focusView = new FocusView(focus);
+        FocusHost.Children.Add(_focusView);
 
         _clockTimer = new DispatcherTimer(DispatcherPriority.Normal)
         {
@@ -156,6 +176,12 @@ public partial class IslandView : UserControl
         _brightness.BrightnessChanged += OnBrightnessChanged;
         _battery.Changed += OnBatteryChanged;
         _network.Changed += OnNetworkChanged;
+        _focus.Tick += OnFocusTick;
+        _focus.StateChanged += OnFocusStateChanged;
+        _focus.Completed += OnFocusCompleted;
+
+        _wasFocusRunning = _focus.IsRunning;
+        UpdateTabVisuals();
 
         _clockTimer.Start();
         _hoverTimer.Start();
@@ -181,6 +207,9 @@ public partial class IslandView : UserControl
         _brightness.BrightnessChanged -= OnBrightnessChanged;
         _battery.Changed -= OnBatteryChanged;
         _network.Changed -= OnNetworkChanged;
+        _focus.Tick -= OnFocusTick;
+        _focus.StateChanged -= OnFocusStateChanged;
+        _focus.Completed -= OnFocusCompleted;
         _initialized = false;
     }
 
@@ -282,7 +311,13 @@ public partial class IslandView : UserControl
         {
             _lastActivity = DateTime.Now;
             ShowClock();
+            if (_focus.HasSession)
+            {
+                SetMode(PanelMode.Focus);
+            }
+
             UpdateMediaUI(_snapshot);
+            UpdateTabVisuals();
         }
 
         StartSpring();
@@ -373,12 +408,104 @@ public partial class IslandView : UserControl
     private void SetClockText()
     {
         var now = DateTime.Now;
-        ClockText.Text = now.ToString("HH:mm", CultureInfo.CurrentCulture);
+        if (_focus.ShowInPill)
+        {
+            ClockText.Text = FormatTime(_focus.Remaining);
+            ClockText.Foreground = _focus.IsRunning ? FocusBrush : FocusPausedBrush;
+        }
+        else
+        {
+            ClockText.Text = now.ToString("HH:mm", CultureInfo.CurrentCulture);
+            ClockText.Foreground = WhiteBrush;
+        }
+
         var date = now.ToString("ddd, d MMM", CultureInfo.CurrentCulture);
         if (!string.IsNullOrEmpty(date))
         {
             DateText.Text = char.ToUpper(date[0], CultureInfo.CurrentCulture) + date[1..];
         }
+    }
+
+    private void OnFocusTick()
+    {
+        if (!_focus.ShowInPill)
+        {
+            return;
+        }
+
+        var second = (int)_focus.Remaining.TotalSeconds;
+        if (second == _lastFocusSecond)
+        {
+            return;
+        }
+
+        _lastFocusSecond = second;
+        SetClockText();
+    }
+
+    private void OnFocusStateChanged()
+    {
+        UpdateTabVisuals();
+
+        if (_focus.IsRunning && !_wasFocusRunning)
+        {
+            SetMode(PanelMode.Focus);
+        }
+
+        _wasFocusRunning = _focus.IsRunning;
+        _lastFocusSecond = -1;
+        SetClockText();
+    }
+
+    private void OnFocusCompleted(FocusPhase phase)
+    {
+        if (_settings.Current.FocusChime)
+        {
+            System.Media.SystemSounds.Asterisk.Play();
+        }
+
+        _lastActivity = DateTime.Now;
+        UpdateTabVisuals();
+        SetMode(PanelMode.Focus);
+
+        var label = phase == FocusPhase.Focus
+            ? "Focus complete \u00B7 Take a break"
+            : "Break over \u00B7 Back to focus";
+        ShowToast("\uE916", label, null, 3200);
+    }
+
+    private void UpdateTabVisuals()
+    {
+        MusicTab.IsChecked = _mode == PanelMode.Music;
+        FocusTab.IsChecked = _mode == PanelMode.Focus;
+        FocusTabDot.Opacity = _focus.HasSession ? 1 : 0;
+    }
+
+    private void SetMode(PanelMode mode)
+    {
+        _mode = mode;
+        var music = mode == PanelMode.Music;
+
+        MusicPanel.Visibility = music ? Visibility.Visible : Visibility.Collapsed;
+        FocusHost.Visibility = music ? Visibility.Collapsed : Visibility.Visible;
+        MusicFooter.Visibility = music ? Visibility.Visible : Visibility.Collapsed;
+
+        UpdateTabVisuals();
+    }
+
+    private void OnMusicTabClick(object sender, RoutedEventArgs e)
+    {
+        SetMode(PanelMode.Music);
+    }
+
+    private void OnFocusTabClick(object sender, RoutedEventArgs e)
+    {
+        SetMode(PanelMode.Focus);
+    }
+
+    private void OnSettingsClick(object sender, RoutedEventArgs e)
+    {
+        SettingsRequested?.Invoke();
     }
 
     private void UpdateIdleVisual()
@@ -397,6 +524,17 @@ public partial class IslandView : UserControl
 
         if (_toastVisible)
         {
+            return;
+        }
+
+        if (_focus.ShowInPill)
+        {
+            _eyesShown = false;
+            _dozing = false;
+            ClockText.BeginAnimation(OpacityProperty, null);
+            EyesCanvas.BeginAnimation(OpacityProperty, null);
+            ClockText.Opacity = 1;
+            EyesCanvas.Opacity = 0;
             return;
         }
 
@@ -720,7 +858,7 @@ public partial class IslandView : UserControl
         WifiGlyph.Opacity = connected ? 1 : 0.25;
     }
 
-    private void ShowToast(string glyph, string label, double? ratio)
+    private void ShowToast(string glyph, string label, double? ratio, int durationMs = 1700)
     {
         _toastToken++;
         _toastVisible = true;
@@ -753,6 +891,7 @@ public partial class IslandView : UserControl
         ToastBorder.BeginAnimation(OpacityProperty, fade);
 
         _toastTimer.Stop();
+        _toastTimer.Interval = TimeSpan.FromMilliseconds(durationMs);
         _toastTimer.Start();
     }
 

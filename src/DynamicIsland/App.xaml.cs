@@ -15,6 +15,7 @@ public partial class App : Application
     private BatteryService? _battery;
     private NetworkService? _network;
     private FullscreenWatcher? _fullscreen;
+    private FocusService? _focus;
     private TrayService? _tray;
 
     protected override async void OnStartup(StartupEventArgs e)
@@ -39,6 +40,7 @@ public partial class App : Application
         _battery = new BatteryService();
         _network = new NetworkService();
         _fullscreen = new FullscreenWatcher();
+        _focus = new FocusService(_settings);
 
         var window = new MainWindow(
             _settings,
@@ -47,7 +49,8 @@ public partial class App : Application
             _brightness,
             _battery,
             _network,
-            _fullscreen);
+            _fullscreen,
+            _focus);
         MainWindow = window;
         window.Show();
 
@@ -65,6 +68,7 @@ public partial class App : Application
         _battery?.Dispose();
         _network?.Dispose();
         _fullscreen?.Dispose();
+        _focus?.Dispose();
 
         if (_ownsMutex)
         {
