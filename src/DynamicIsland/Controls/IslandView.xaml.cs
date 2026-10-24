@@ -69,6 +69,8 @@ public partial class IslandView : UserControl
 
     private DateTime _lastActivity = DateTime.Now;
     private PanelMode _mode = PanelMode.Music;
+    private bool _modeAnimating;
+    private DispatcherTimer? _modeAnimationTimer;
     private int _lastFocusSecond = -1;
     private bool _wasFocusRunning;
 
@@ -199,6 +201,7 @@ public partial class IslandView : UserControl
         _idleTimer.Stop();
         _blinkTimer.Stop();
         _toastTimer.Stop();
+        _modeAnimationTimer?.Stop();
         CompositionTarget.Rendering -= OnRendering;
         _springRunning = false;
 
@@ -313,7 +316,7 @@ public partial class IslandView : UserControl
             ShowClock();
             if (_focus.HasSession)
             {
-                SetMode(PanelMode.Focus);
+                SetMode(PanelMode.Focus, animate: false);
             }
 
             UpdateMediaUI(_snapshot);
@@ -481,16 +484,158 @@ public partial class IslandView : UserControl
         FocusTabDot.Opacity = _focus.HasSession ? 1 : 0;
     }
 
-    private void SetMode(PanelMode mode)
+    private void SetMode(PanelMode mode, bool animate = true)
     {
+        if (_modeAnimating)
+        {
+            return;
+        }
+
+        var oldMode = _mode;
+        if (oldMode == mode)
+        {
+            UpdateTabVisuals();
+            return;
+        }
+
         _mode = mode;
-        var music = mode == PanelMode.Music;
-
-        MusicPanel.Visibility = music ? Visibility.Visible : Visibility.Collapsed;
-        FocusHost.Visibility = music ? Visibility.Collapsed : Visibility.Visible;
-        MusicFooter.Visibility = music ? Visibility.Visible : Visibility.Collapsed;
-
         UpdateTabVisuals();
+
+        var canAnimate = animate && _expanded && IsVisible;
+        if (!canAnimate)
+        {
+            SnapMode(mode);
+            return;
+        }
+
+        AnimateModeSwitch(oldMode, mode);
+    }
+
+    private void SnapMode(PanelMode mode)
+    {
+        MusicView.BeginAnimation(OpacityProperty, null);
+        FocusHost.BeginAnimation(OpacityProperty, null);
+        MusicTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+        FocusTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+
+        MusicTranslate.X = 0;
+        FocusTranslate.X = 0;
+        MusicView.Opacity = 1;
+        FocusHost.Opacity = 1;
+
+        var music = mode == PanelMode.Music;
+        MusicView.Visibility = music ? Visibility.Visible : Visibility.Collapsed;
+        FocusHost.Visibility = music ? Visibility.Collapsed : Visibility.Visible;
+
+        SnapTabHighlight(mode);
+    }
+
+    private void AnimateModeSwitch(PanelMode oldMode, PanelMode newMode)
+    {
+        const double distance = 44;
+
+        _modeAnimating = true;
+        MusicTab.IsEnabled = false;
+        FocusTab.IsEnabled = false;
+
+        MusicView.Visibility = Visibility.Visible;
+        FocusHost.Visibility = Visibility.Visible;
+
+        MusicView.BeginAnimation(OpacityProperty, null);
+        FocusHost.BeginAnimation(OpacityProperty, null);
+        MusicTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+        FocusTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+
+        var toFocus = newMode == PanelMode.Focus;
+        var incoming = toFocus ? (FrameworkElement)FocusHost : MusicView;
+        var outgoing = toFocus ? (FrameworkElement)MusicView : FocusHost;
+        var incomingTranslate = toFocus ? FocusTranslate : MusicTranslate;
+        var outgoingTranslate = toFocus ? MusicTranslate : FocusTranslate;
+
+        outgoing.Opacity = 1;
+        outgoingTranslate.X = 0;
+
+        incoming.Opacity = 0;
+        incomingTranslate.X = toFocus ? distance : -distance;
+
+        var outgoingX = new DoubleAnimation(
+            0,
+            toFocus ? -distance : distance,
+            TimeSpan.FromMilliseconds(220))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+        var outgoingOpacity = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(190));
+        outgoingTranslate.BeginAnimation(TranslateTransform.XProperty, outgoingX);
+        outgoing.BeginAnimation(OpacityProperty, outgoingOpacity);
+
+        var incomingX = new DoubleAnimation(
+            incomingTranslate.X,
+            0,
+            TimeSpan.FromMilliseconds(260))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var incomingOpacity = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(210));
+        incomingTranslate.BeginAnimation(TranslateTransform.XProperty, incomingX);
+        incoming.BeginAnimation(OpacityProperty, incomingOpacity);
+
+        AnimateTabHighlight(toFocus ? PanelMode.Focus : PanelMode.Music);
+
+        _modeAnimationTimer?.Stop();
+        _modeAnimationTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(280)
+        };
+        _modeAnimationTimer.Tick += (_, _) =>
+        {
+            _modeAnimationTimer?.Stop();
+            FinishModeSwitch(newMode);
+        };
+        _modeAnimationTimer.Start();
+    }
+
+    private void FinishModeSwitch(PanelMode mode)
+    {
+        _modeAnimating = false;
+        MusicTab.IsEnabled = true;
+        FocusTab.IsEnabled = true;
+
+        MusicView.BeginAnimation(OpacityProperty, null);
+        FocusHost.BeginAnimation(OpacityProperty, null);
+        MusicTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+        FocusTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+
+        MusicTranslate.X = 0;
+        FocusTranslate.X = 0;
+        MusicView.Opacity = 1;
+        FocusHost.Opacity = 1;
+
+        var music = mode == PanelMode.Music;
+        MusicView.Visibility = music ? Visibility.Visible : Visibility.Collapsed;
+        FocusHost.Visibility = music ? Visibility.Collapsed : Visibility.Visible;
+
+        SnapTabHighlight(mode);
+        UpdateTabVisuals();
+    }
+
+    private void AnimateTabHighlight(PanelMode mode)
+    {
+        var target = mode == PanelMode.Music ? 0.0 : 34.0;
+        var animation = new DoubleAnimation(
+            TabHighlightTransform.X,
+            target,
+            TimeSpan.FromMilliseconds(220))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        TabHighlightTransform.BeginAnimation(TranslateTransform.XProperty, animation);
+    }
+
+    private void SnapTabHighlight(PanelMode mode)
+    {
+        TabHighlightTransform.BeginAnimation(TranslateTransform.XProperty, null);
+        TabHighlightTransform.X = mode == PanelMode.Music ? 0 : 34;
     }
 
     private void OnMusicTabClick(object sender, RoutedEventArgs e)

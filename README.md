@@ -12,6 +12,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Hover untuk membuka** — animasi spring halus, konten muncul ke bawah.
 - **Jam + tanggal** — jam di pill, tanggal & status di panel.
 - **Tab Music / Focus** — panel bisa berpindah antara media player dan focus timer.
+- **Transisi panel** — slide + fade halus saat pindah Music/Focus, highlight tab ikut bergeser.
 - **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), start/pause/reset, progress, session counter,
   chime, dan saran short/long break setiap 4 sesi. Saat timer jalan, pill menampilkan sisa waktu.
 - **Media player** — judul, artis, album art, progress, play/pause, previous, next, dan seek.
@@ -29,7 +30,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.2.0-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.2.1-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -42,8 +43,8 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 |---|---|
 | Arahkan kursor ke pill | Panel terbuka |
 | Jauhkan kursor | Panel menutup (delay ~0,3 detik) |
-| Klik ikon **Music** | Panel media player |
-| Klik ikon **Focus** | Panel focus timer |
+| Klik ikon **Music** | Panel media player (dengan animasi geser) |
+| Klik ikon **Focus** | Panel focus timer (dengan animasi geser) |
 | Klik ikon **gear** | Buka settings |
 | Klik progress bar | Seek ke posisi tersebut |
 | Klik ikon tray | Buka menu pengaturan |
