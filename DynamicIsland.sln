@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C643F81A-A457-43EE-9FDA-A28B2565F96E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicIsland", "src\DynamicIsland\DynamicIsland.csproj", "{ECD5FD08-0782-41A8-885D-1B3F34232B51}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ECD5FD08-0782-41A8-885D-1B3F34232B51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECD5FD08-0782-41A8-885D-1B3F34232B51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECD5FD08-0782-41A8-885D-1B3F34232B51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECD5FD08-0782-41A8-885D-1B3F34232B51}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{ECD5FD08-0782-41A8-885D-1B3F34232B51} = {C643F81A-A457-43EE-9FDA-A28B2565F96E}
+	EndGlobalSection
+EndGlobal
