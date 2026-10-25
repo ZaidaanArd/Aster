@@ -19,11 +19,11 @@ public enum PanelMode
 
 public partial class IslandView : UserControl
 {
-    private const double PanelWidth = 640;
-    private const double PanelHeight = 320;
-    private const double MediaClosedWidth = 604;
-    private const double MediaOpenWidth = 280;
-    private const double LyricsPaneWidth = 324;
+    private const double PanelWidth = 500;
+    private const double PanelHeight = 252;
+    private const double MediaClosedWidth = 464;
+    private const double MediaOpenWidth = 260;
+    private const double LyricsPaneWidth = 204;
 
     private static readonly PanelMode[] AllModes =
     {
@@ -754,37 +754,43 @@ public partial class IslandView : UserControl
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
         var duration = TimeSpan.FromMilliseconds(300);
 
-        MediaColumn.BeginAnimation(ColumnDefinition.WidthProperty, new GridLengthAnimation
-        {
-            From = new GridLength(open ? MediaClosedWidth : MediaOpenWidth),
-            To = new GridLength(open ? MediaOpenWidth : MediaClosedWidth),
-            Duration = duration,
-            EasingFunction = ease
-        });
-
-        LyricsColumn.BeginAnimation(ColumnDefinition.WidthProperty, new GridLengthAnimation
-        {
-            From = new GridLength(open ? 0 : LyricsPaneWidth),
-            To = new GridLength(open ? LyricsPaneWidth : 0),
-            Duration = duration,
-            EasingFunction = ease
-        });
-
-        var fade = new DoubleAnimation(
-            open ? 0 : 1,
-            open ? 1 : 0,
-            TimeSpan.FromMilliseconds(open ? 240 : 200));
-        _lyricsView.BeginAnimation(OpacityProperty, fade);
-
         if (open)
         {
-            LyricsTranslate.X = 24;
-            var slide = new DoubleAnimation(24, 0, duration)
-            {
-                EasingFunction = ease
-            };
-            LyricsTranslate.BeginAnimation(TranslateTransform.XProperty, slide);
+            LyricsPane.Visibility = Visibility.Visible;
         }
+
+        MusicMedia.BeginAnimation(WidthProperty, new DoubleAnimation(
+            open ? MediaClosedWidth : MediaOpenWidth,
+            open ? MediaOpenWidth : MediaClosedWidth,
+            duration)
+        {
+            EasingFunction = ease
+        });
+
+        LyricsPane.BeginAnimation(WidthProperty, new DoubleAnimation(
+            open ? 0 : LyricsPaneWidth,
+            open ? LyricsPaneWidth : 0,
+            duration)
+        {
+            EasingFunction = ease
+        });
+
+        MusicInfoTranslate.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(
+            open ? 0 : -8,
+            open ? -8 : 0,
+            duration)
+        {
+            EasingFunction = ease
+        });
+
+        LyricsTranslate.X = open ? LyricsPaneWidth : 0;
+        LyricsTranslate.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(
+            open ? LyricsPaneWidth : 0,
+            open ? 0 : LyricsPaneWidth,
+            duration)
+        {
+            EasingFunction = ease
+        });
 
         var timer = new DispatcherTimer
         {
@@ -807,23 +813,24 @@ public partial class IslandView : UserControl
     {
         _lyricsAnimating = false;
 
-        MediaColumn.BeginAnimation(ColumnDefinition.WidthProperty, null);
-        LyricsColumn.BeginAnimation(ColumnDefinition.WidthProperty, null);
+        MusicMedia.BeginAnimation(WidthProperty, null);
+        LyricsPane.BeginAnimation(WidthProperty, null);
         LyricsTranslate.BeginAnimation(TranslateTransform.XProperty, null);
-        _lyricsView.BeginAnimation(OpacityProperty, null);
+        MusicInfoTranslate.BeginAnimation(TranslateTransform.XProperty, null);
 
         LyricsTranslate.X = 0;
+        MusicInfoTranslate.X = open ? -8 : 0;
         _lyricsView.Opacity = 1;
 
         if (open)
         {
-            MediaColumn.Width = new GridLength(MediaOpenWidth);
-            LyricsColumn.Width = new GridLength(LyricsPaneWidth);
+            MusicMedia.Width = MediaOpenWidth;
+            LyricsPane.Width = LyricsPaneWidth;
         }
         else
         {
-            MediaColumn.Width = new GridLength(MediaClosedWidth);
-            LyricsColumn.Width = new GridLength(0);
+            MusicMedia.Width = MediaClosedWidth;
+            LyricsPane.Width = 0;
             LyricsPane.Visibility = Visibility.Collapsed;
         }
     }

@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignWidth="324"
-             d:DesignHeight="238"
+             d:DesignWidth="204"
+             d:DesignHeight="170"
              Focusable="False"
              Background="Transparent">
 
@@ -59,7 +59,7 @@
                    Foreground="{StaticResource TextTertiary}"
                    TextWrapping="Wrap"
                    TextAlignment="Center"
-                   MaxWidth="280"
+                   MaxWidth="170"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    Visibility="Collapsed" />

@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignWidth="640"
-             d:DesignHeight="320"
+             d:DesignWidth="500"
+             d:DesignHeight="252"
              Width="260"
              Height="40"
              Focusable="False"
@@ -95,8 +95,8 @@
 
                 <!-- Expanded panel -->
                 <Grid x:Name="ExpandedLayer"
-                      Width="604"
-                      Height="284"
+                      Width="464"
+                      Height="216"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Top"
                       Margin="0,18,0,0"
@@ -150,16 +150,12 @@
 
                     <!-- Music (with the optional lyrics pane) and Focus -->
                     <Grid x:Name="SlideHost" Grid.Row="1" ClipToBounds="True">
-                        <Grid x:Name="MusicView" Opacity="1" ClipToBounds="True">
-                            <Grid.RenderTransform>
+                        <StackPanel x:Name="MusicView" Orientation="Horizontal" Opacity="1" ClipToBounds="True">
+                            <StackPanel.RenderTransform>
                                 <TranslateTransform x:Name="MusicTranslate" />
-                            </Grid.RenderTransform>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition x:Name="MediaColumn" Width="*" />
-                                <ColumnDefinition x:Name="LyricsColumn" Width="0" />
-                            </Grid.ColumnDefinitions>
+                            </StackPanel.RenderTransform>
 
-                            <Grid x:Name="MusicMedia" Grid.Column="0">
+                            <Grid x:Name="MusicMedia" Width="464" Height="170">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="18" />
@@ -201,6 +197,9 @@
                                     </Border>
 
                                     <Grid Grid.Column="2" VerticalAlignment="Center">
+                                        <Grid.RenderTransform>
+                                            <TranslateTransform x:Name="MusicInfoTranslate" />
+                                        </Grid.RenderTransform>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
@@ -312,7 +311,8 @@
 
                             <!-- Lyrics pane: the LyricsView is added here in code-behind -->
                             <Grid x:Name="LyricsPane"
-                                  Grid.Column="1"
+                                  Width="0"
+                                  Height="170"
                                   Visibility="Collapsed"
                                   ClipToBounds="True"
                                   Background="#000000">
@@ -320,7 +320,7 @@
                                     <TranslateTransform x:Name="LyricsTranslate" />
                                 </Grid.RenderTransform>
                             </Grid>
-                        </Grid>
+                        </StackPanel>
 
                         <Grid x:Name="FocusHost" Visibility="Collapsed" Opacity="0">
                             <Grid.RenderTransform>

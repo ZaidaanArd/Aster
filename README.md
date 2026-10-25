@@ -11,10 +11,11 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Notch selalu di atas** — hitam, membulat, menempel di tepi atas, tidak muncul di taskbar/Alt+Tab.
 - **Hover untuk membuka** — animasi spring halus, konten muncul ke bawah.
 - **Jam + tanggal** — jam di pill, tanggal & status di panel.
-- **Tab Music / Focus** — panel media dan focus timer, ukuran panel tetap 640×320.
+- **Tab Music / Focus** — panel media dan focus timer, ukuran panel tetap 500×252.
 - **Transisi panel** — slide + fade halus saat pindah tab, highlight tab ikut bergeser.
-- **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik di kanan; media dan progress
-  bergeser ke kiri dengan animasi, tanpa tab terpisah dan tanpa kontrol start/pause ganda.
+- **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik (204px) di kanan; media
+  (260px) dan progress bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
+  tanpa tab terpisah dan tanpa kontrol start/pause ganda.
   Synced lyrics dari LRCLIB, baris aktif di-highlight, auto-scroll, klik baris untuk seek,
   fallback plain lyrics, dan cache lokal.
 - **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), start/pause/reset, progress, session counter,
@@ -34,7 +35,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.4.0-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.4.1-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -67,8 +68,9 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
 ### Lyrics
 
-- Buka panel lirik lewat ikon **speech bubble** di tab Music. Media dan progress bar bergeser ke kiri;
-  panel lirik muncul di kanan. Kontrol start/pause tetap di kolom Music.
+- Buka panel lirik lewat ikon **speech bubble** di tab Music. Media (260px) dan progress bar
+  bergeser ke kiri; panel lirik (204px) slide masuk dari kanan — morph, tanpa fade. Kontrol
+  start/pause tetap di kolom Music.
 - Lirik diambil dari [LRCLIB](https://lrclib.net) berdasarkan judul, artis, album, dan durasi.
 - Synced lyrics: baris aktif di-highlight dan auto-scroll. Klik baris untuk seek.
 - Kalau tidak ada synced lyrics, ditampilkan plain lyrics. Kalau tidak ada sama sekali, muncul pesan.
@@ -117,7 +119,6 @@ src/DynamicIsland/
 ├─ Controls/IslandView.*      notch, animasi, jam, mascot, media UI, toast, tab bar
 ├─ Controls/FocusView.*       UI focus timer (chips, countdown, progress, kontrol)
 ├─ Controls/LyricsView.*      pane lirik (header, status, refresh, highlight, auto-scroll)
-├─ Controls/GridLengthAnimation.cs  animasi kolom media/lirik
 ├─ SettingsWindow.*           settings window dark (general, appearance, lyrics, focus, data)
 ├─ Services/
 │  ├─ MediaService.cs         WinRT GSMTC: now playing, artwork, kontrol
