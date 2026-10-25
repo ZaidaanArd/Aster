@@ -11,6 +11,7 @@ public sealed class AppSettings
     public bool HideInFullscreen { get; set; } = true;
     public bool VolumeToast { get; set; } = true;
     public bool BrightnessToast { get; set; } = true;
+    public bool LyricsEnabled { get; set; } = true;
     public int FocusMinutes { get; set; } = 25;
     public int ShortBreakMinutes { get; set; } = 5;
     public int LongBreakMinutes { get; set; } = 15;

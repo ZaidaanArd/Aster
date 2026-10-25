@@ -16,6 +16,7 @@ public partial class App : Application
     private NetworkService? _network;
     private FullscreenWatcher? _fullscreen;
     private FocusService? _focus;
+    private LyricsService? _lyrics;
     private TrayService? _tray;
 
     protected override async void OnStartup(StartupEventArgs e)
@@ -41,6 +42,7 @@ public partial class App : Application
         _network = new NetworkService();
         _fullscreen = new FullscreenWatcher();
         _focus = new FocusService(_settings);
+        _lyrics = new LyricsService(_settings);
 
         var window = new MainWindow(
             _settings,
@@ -50,7 +52,8 @@ public partial class App : Application
             _battery,
             _network,
             _fullscreen,
-            _focus);
+            _focus,
+            _lyrics);
         MainWindow = window;
         window.Show();
 
@@ -69,6 +72,7 @@ public partial class App : Application
         _network?.Dispose();
         _fullscreen?.Dispose();
         _focus?.Dispose();
+        _lyrics?.Dispose();
 
         if (_ownsMutex)
         {

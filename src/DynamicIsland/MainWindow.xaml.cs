@@ -11,6 +11,7 @@ public partial class MainWindow : Window
     private readonly SettingsService _settings;
     private readonly FullscreenWatcher _fullscreen;
     private readonly FocusService _focus;
+    private readonly LyricsService _lyrics;
     private readonly IslandView _island;
 
     private HwndSource? _source;
@@ -26,15 +27,17 @@ public partial class MainWindow : Window
         BatteryService battery,
         NetworkService network,
         FullscreenWatcher fullscreen,
-        FocusService focus)
+        FocusService focus,
+        LyricsService lyrics)
     {
         _settings = settings;
         _fullscreen = fullscreen;
         _focus = focus;
+        _lyrics = lyrics;
 
         InitializeComponent();
 
-        _island = new IslandView(settings, media, audio, brightness, battery, network, focus);
+        _island = new IslandView(settings, media, audio, brightness, battery, network, focus, lyrics);
         _island.SettingsRequested += ShowSettings;
         IslandHost.Children.Add(_island);
 
@@ -269,7 +272,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        _settingsWindow = new SettingsWindow(_settings, this);
+        _settingsWindow = new SettingsWindow(_settings, _lyrics, this, _island.CurrentPanelHeight);
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();
         _settingsWindow.Activate();

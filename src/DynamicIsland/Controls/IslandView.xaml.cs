@@ -14,13 +14,23 @@ namespace DynamicIsland.Controls;
 public enum PanelMode
 {
     Music,
+    Lyrics,
     Focus
 }
 
 public partial class IslandView : UserControl
 {
-    private const double ExpandedWidth = 500;
-    private const double ExpandedHeight = 252;
+    private const double MusicPanelWidth = 500;
+    private const double MusicPanelHeight = 252;
+    private const double LyricsPanelWidth = 640;
+    private const double LyricsPanelHeight = 340;
+
+    private static readonly PanelMode[] AllModes =
+    {
+        PanelMode.Music,
+        PanelMode.Lyrics,
+        PanelMode.Focus
+    };
 
     private static readonly Brush GreenBrush = new SolidColorBrush(Color.FromRgb(0x32, 0xD7, 0x4B));
     private static readonly Brush OrangeBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0x9F, 0x0A));
@@ -36,6 +46,8 @@ public partial class IslandView : UserControl
     private readonly NetworkService _network;
     private readonly FocusService _focus;
     private readonly FocusView _focusView;
+    private readonly LyricsService _lyrics;
+    private readonly LyricsView _lyricsView;
 
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _hoverTimer;
@@ -65,16 +77,21 @@ public partial class IslandView : UserControl
     private double _targetHeight = 40;
     private double _collapsedWidth = 260;
     private double _collapsedHeight = 40;
+    private double _expandedWidth = MusicPanelWidth;
+    private double _expandedHeight = MusicPanelHeight;
     private long _lastFrameTicks;
 
     private DateTime _lastActivity = DateTime.Now;
     private PanelMode _mode = PanelMode.Music;
     private bool _modeAnimating;
     private DispatcherTimer? _modeAnimationTimer;
+    private bool _syncingTabs;
     private int _lastFocusSecond = -1;
     private bool _wasFocusRunning;
 
     public event Action? SettingsRequested;
+
+    public double CurrentPanelHeight => _expanded ? _expandedHeight : GetPanelSize(_mode).Height;
 
     public IslandView(
         SettingsService settings,
@@ -83,7 +100,8 @@ public partial class IslandView : UserControl
         BrightnessService brightness,
         BatteryService battery,
         NetworkService network,
-        FocusService focus)
+        FocusService focus,
+        LyricsService lyrics)
     {
         _settings = settings;
         _media = media;
@@ -92,11 +110,15 @@ public partial class IslandView : UserControl
         _battery = battery;
         _network = network;
         _focus = focus;
+        _lyrics = lyrics;
 
         InitializeComponent();
 
         _focusView = new FocusView(focus);
         FocusHost.Children.Add(_focusView);
+
+        _lyricsView = new LyricsView(media, lyrics);
+        LyricsHost.Children.Add(_lyricsView);
 
         _clockTimer = new DispatcherTimer(DispatcherPriority.Normal)
         {
@@ -181,6 +203,7 @@ public partial class IslandView : UserControl
         _focus.Tick += OnFocusTick;
         _focus.StateChanged += OnFocusStateChanged;
         _focus.Completed += OnFocusCompleted;
+        _lyrics.Changed += OnLyricsChanged;
 
         _wasFocusRunning = _focus.IsRunning;
         UpdateTabVisuals();
@@ -213,6 +236,7 @@ public partial class IslandView : UserControl
         _focus.Tick -= OnFocusTick;
         _focus.StateChanged -= OnFocusStateChanged;
         _focus.Completed -= OnFocusCompleted;
+        _lyrics.Changed -= OnLyricsChanged;
         _initialized = false;
     }
 
@@ -306,8 +330,17 @@ public partial class IslandView : UserControl
         }
 
         _expanded = expanded;
-        _targetWidth = expanded ? ExpandedWidth : _collapsedWidth;
-        _targetHeight = expanded ? ExpandedHeight : _collapsedHeight;
+
+        if (expanded)
+        {
+            ApplyPanelSize(_mode);
+        }
+        else
+        {
+            _targetWidth = _collapsedWidth;
+            _targetHeight = _collapsedHeight;
+        }
+
         ExpandedLayer.IsHitTestVisible = expanded;
 
         if (expanded)
@@ -357,11 +390,13 @@ public partial class IslandView : UserControl
         Height = _currentHeight;
 
         var progress = Math.Clamp(
-            (_currentWidth - _collapsedWidth) / Math.Max(1, ExpandedWidth - _collapsedWidth),
+            (_currentWidth - _collapsedWidth) / Math.Max(1, _expandedWidth - _collapsedWidth),
             0,
             1);
 
-        ExpandedLayer.Opacity = Math.Clamp((progress - 0.18) / 0.82, 0, 1);
+        ExpandedLayer.Opacity = _expanded
+            ? 1
+            : Math.Clamp((progress - 0.18) / 0.82, 0, 1);
         CollapsedLayer.Opacity = _settings.Current.MinimalNotch ? 0 : Math.Clamp(1 - progress * 3, 0, 1);
 
         if (!widthSettled || !heightSettled)
@@ -479,9 +514,81 @@ public partial class IslandView : UserControl
 
     private void UpdateTabVisuals()
     {
-        MusicTab.IsChecked = _mode == PanelMode.Music;
-        FocusTab.IsChecked = _mode == PanelMode.Focus;
+        if (!_initialized)
+        {
+            return;
+        }
+
+        _syncingTabs = true;
+        try
+        {
+            MusicTab.IsChecked = _mode == PanelMode.Music;
+            LyricsTab.IsChecked = _mode == PanelMode.Lyrics;
+            FocusTab.IsChecked = _mode == PanelMode.Focus;
+        }
+        finally
+        {
+            _syncingTabs = false;
+        }
+
         FocusTabDot.Opacity = _focus.HasSession ? 1 : 0;
+        LyricsTabDot.Opacity = _lyrics.IsLoading ? 1 : 0;
+    }
+
+    private static (double Width, double Height) GetPanelSize(PanelMode mode)
+    {
+        return mode == PanelMode.Lyrics
+            ? (LyricsPanelWidth, LyricsPanelHeight)
+            : (MusicPanelWidth, MusicPanelHeight);
+    }
+
+    private static int ModeIndex(PanelMode mode)
+    {
+        return mode switch
+        {
+            PanelMode.Music => 0,
+            PanelMode.Lyrics => 1,
+            PanelMode.Focus => 2,
+            _ => 0
+        };
+    }
+
+    private FrameworkElement GetView(PanelMode mode)
+    {
+        return mode switch
+        {
+            PanelMode.Music => MusicView,
+            PanelMode.Lyrics => LyricsHost,
+            PanelMode.Focus => FocusHost,
+            _ => MusicView
+        };
+    }
+
+    private TranslateTransform GetTranslate(PanelMode mode)
+    {
+        return mode switch
+        {
+            PanelMode.Music => MusicTranslate,
+            PanelMode.Lyrics => LyricsTranslate,
+            PanelMode.Focus => FocusTranslate,
+            _ => MusicTranslate
+        };
+    }
+
+    private void ApplyPanelSize(PanelMode mode)
+    {
+        var (width, height) = GetPanelSize(mode);
+        _expandedWidth = width;
+        _expandedHeight = height;
+        ExpandedLayer.Width = width - 36;
+        ExpandedLayer.Height = height - 36;
+
+        if (_expanded)
+        {
+            _targetWidth = width;
+            _targetHeight = height;
+            StartSpring();
+        }
     }
 
     private void SetMode(PanelMode mode, bool animate = true)
@@ -500,6 +607,12 @@ public partial class IslandView : UserControl
 
         _mode = mode;
         UpdateTabVisuals();
+        ApplyPanelSize(mode);
+
+        if (mode == PanelMode.Lyrics)
+        {
+            _ = _lyrics.LoadAsync(_snapshot);
+        }
 
         var canAnimate = animate && _expanded && IsVisible;
         if (!canAnimate)
@@ -513,19 +626,17 @@ public partial class IslandView : UserControl
 
     private void SnapMode(PanelMode mode)
     {
-        MusicView.BeginAnimation(OpacityProperty, null);
-        FocusHost.BeginAnimation(OpacityProperty, null);
-        MusicTranslate.BeginAnimation(TranslateTransform.XProperty, null);
-        FocusTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+        foreach (var candidate in AllModes)
+        {
+            var view = GetView(candidate);
+            var translate = GetTranslate(candidate);
 
-        MusicTranslate.X = 0;
-        FocusTranslate.X = 0;
-        MusicView.Opacity = 1;
-        FocusHost.Opacity = 1;
-
-        var music = mode == PanelMode.Music;
-        MusicView.Visibility = music ? Visibility.Visible : Visibility.Collapsed;
-        FocusHost.Visibility = music ? Visibility.Collapsed : Visibility.Visible;
+            view.BeginAnimation(OpacityProperty, null);
+            translate.BeginAnimation(TranslateTransform.XProperty, null);
+            translate.X = 0;
+            view.Opacity = 1;
+            view.Visibility = candidate == mode ? Visibility.Visible : Visibility.Collapsed;
+        }
 
         SnapTabHighlight(mode);
     }
@@ -536,31 +647,38 @@ public partial class IslandView : UserControl
 
         _modeAnimating = true;
         MusicTab.IsEnabled = false;
+        LyricsTab.IsEnabled = false;
         FocusTab.IsEnabled = false;
 
-        MusicView.Visibility = Visibility.Visible;
-        FocusHost.Visibility = Visibility.Visible;
+        var forward = ModeIndex(newMode) > ModeIndex(oldMode);
+        var incoming = GetView(newMode);
+        var outgoing = GetView(oldMode);
+        var incomingTranslate = GetTranslate(newMode);
+        var outgoingTranslate = GetTranslate(oldMode);
 
-        MusicView.BeginAnimation(OpacityProperty, null);
-        FocusHost.BeginAnimation(OpacityProperty, null);
-        MusicTranslate.BeginAnimation(TranslateTransform.XProperty, null);
-        FocusTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+        foreach (var candidate in AllModes)
+        {
+            var view = GetView(candidate);
+            var translate = GetTranslate(candidate);
 
-        var toFocus = newMode == PanelMode.Focus;
-        var incoming = toFocus ? (FrameworkElement)FocusHost : MusicView;
-        var outgoing = toFocus ? (FrameworkElement)MusicView : FocusHost;
-        var incomingTranslate = toFocus ? FocusTranslate : MusicTranslate;
-        var outgoingTranslate = toFocus ? MusicTranslate : FocusTranslate;
+            view.BeginAnimation(OpacityProperty, null);
+            translate.BeginAnimation(TranslateTransform.XProperty, null);
+            translate.X = 0;
+            view.Opacity = 1;
+            view.Visibility = candidate == oldMode || candidate == newMode
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
 
         outgoing.Opacity = 1;
         outgoingTranslate.X = 0;
 
         incoming.Opacity = 0;
-        incomingTranslate.X = toFocus ? distance : -distance;
+        incomingTranslate.X = forward ? distance : -distance;
 
         var outgoingX = new DoubleAnimation(
             0,
-            toFocus ? -distance : distance,
+            forward ? -distance : distance,
             TimeSpan.FromMilliseconds(220))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
@@ -580,7 +698,7 @@ public partial class IslandView : UserControl
         incomingTranslate.BeginAnimation(TranslateTransform.XProperty, incomingX);
         incoming.BeginAnimation(OpacityProperty, incomingOpacity);
 
-        AnimateTabHighlight(toFocus ? PanelMode.Focus : PanelMode.Music);
+        AnimateTabHighlight(newMode);
 
         _modeAnimationTimer?.Stop();
         _modeAnimationTimer = new DispatcherTimer
@@ -599,21 +717,20 @@ public partial class IslandView : UserControl
     {
         _modeAnimating = false;
         MusicTab.IsEnabled = true;
+        LyricsTab.IsEnabled = true;
         FocusTab.IsEnabled = true;
 
-        MusicView.BeginAnimation(OpacityProperty, null);
-        FocusHost.BeginAnimation(OpacityProperty, null);
-        MusicTranslate.BeginAnimation(TranslateTransform.XProperty, null);
-        FocusTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+        foreach (var candidate in AllModes)
+        {
+            var view = GetView(candidate);
+            var translate = GetTranslate(candidate);
 
-        MusicTranslate.X = 0;
-        FocusTranslate.X = 0;
-        MusicView.Opacity = 1;
-        FocusHost.Opacity = 1;
-
-        var music = mode == PanelMode.Music;
-        MusicView.Visibility = music ? Visibility.Visible : Visibility.Collapsed;
-        FocusHost.Visibility = music ? Visibility.Collapsed : Visibility.Visible;
+            view.BeginAnimation(OpacityProperty, null);
+            translate.BeginAnimation(TranslateTransform.XProperty, null);
+            translate.X = 0;
+            view.Opacity = 1;
+            view.Visibility = candidate == mode ? Visibility.Visible : Visibility.Collapsed;
+        }
 
         SnapTabHighlight(mode);
         UpdateTabVisuals();
@@ -621,7 +738,7 @@ public partial class IslandView : UserControl
 
     private void AnimateTabHighlight(PanelMode mode)
     {
-        var target = mode == PanelMode.Music ? 0.0 : 34.0;
+        var target = ModeIndex(mode) * 34.0;
         var animation = new DoubleAnimation(
             TabHighlightTransform.X,
             target,
@@ -635,17 +752,49 @@ public partial class IslandView : UserControl
     private void SnapTabHighlight(PanelMode mode)
     {
         TabHighlightTransform.BeginAnimation(TranslateTransform.XProperty, null);
-        TabHighlightTransform.X = mode == PanelMode.Music ? 0 : 34;
+        TabHighlightTransform.X = ModeIndex(mode) * 34;
     }
 
-    private void OnMusicTabClick(object sender, RoutedEventArgs e)
+    private void OnMusicTabChecked(object sender, RoutedEventArgs e)
     {
+        if (_syncingTabs || !_initialized)
+        {
+            return;
+        }
+
         SetMode(PanelMode.Music);
     }
 
-    private void OnFocusTabClick(object sender, RoutedEventArgs e)
+    private void OnLyricsTabChecked(object sender, RoutedEventArgs e)
     {
+        if (_syncingTabs || !_initialized)
+        {
+            return;
+        }
+
+        SetMode(PanelMode.Lyrics);
+    }
+
+    private void OnFocusTabChecked(object sender, RoutedEventArgs e)
+    {
+        if (_syncingTabs || !_initialized)
+        {
+            return;
+        }
+
         SetMode(PanelMode.Focus);
+    }
+
+    private void OnLyricsChanged()
+    {
+        if (Dispatcher.CheckAccess())
+        {
+            UpdateTabVisuals();
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(new Action(UpdateTabVisuals));
+        }
     }
 
     private void OnSettingsClick(object sender, RoutedEventArgs e)
@@ -794,7 +943,12 @@ public partial class IslandView : UserControl
     {
         Dispatcher.BeginInvoke(new Action(() =>
         {
-            var trackChanged = !string.Equals(_snapshot?.Title, snapshot?.Title, StringComparison.Ordinal) ||
+            var lyricsTrackChanged =
+                !string.Equals(_snapshot?.Title, snapshot?.Title, StringComparison.Ordinal) ||
+                !string.Equals(_snapshot?.Artist, snapshot?.Artist, StringComparison.Ordinal) ||
+                _snapshot?.Duration != snapshot?.Duration;
+
+            var trackChanged = lyricsTrackChanged ||
                                _snapshot?.IsPlaying != snapshot?.IsPlaying;
             _snapshot = snapshot;
             if (trackChanged)
@@ -805,6 +959,11 @@ public partial class IslandView : UserControl
             UpdateMediaUI(snapshot);
             UpdateProgress();
             UpdateIdleVisual();
+
+            if (lyricsTrackChanged && _mode == PanelMode.Lyrics)
+            {
+                _ = _lyrics.LoadAsync(snapshot);
+            }
         }));
     }
 

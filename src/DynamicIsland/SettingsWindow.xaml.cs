@@ -9,27 +9,32 @@ namespace DynamicIsland;
 public partial class SettingsWindow : Window
 {
     private readonly SettingsService _settings;
+    private readonly LyricsService _lyrics;
     private readonly MainWindow _mainWindow;
     private bool _loading;
 
-    public SettingsWindow(SettingsService settings, MainWindow mainWindow)
+    public SettingsWindow(
+        SettingsService settings,
+        LyricsService lyrics,
+        MainWindow mainWindow,
+        double islandHeight)
     {
         _settings = settings;
+        _lyrics = lyrics;
         _mainWindow = mainWindow;
 
         InitializeComponent();
-        PositionBelowIsland();
+        PositionBelowIsland(islandHeight);
         LoadFromSettings();
 
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
-        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.2.0"}";
+        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.3.0"}";
         DataPathText.Text = _settings.FilePath;
     }
 
-    private void PositionBelowIsland()
+    private void PositionBelowIsland(double islandHeight)
     {
         var workArea = SystemParameters.WorkArea;
-        const double islandHeight = 252;
         const double gap = 8;
 
         var top = islandHeight + gap;
@@ -58,6 +63,7 @@ public partial class SettingsWindow : Window
         ChkMinimal.IsChecked = settings.MinimalNotch;
         ChkVolume.IsChecked = settings.VolumeToast;
         ChkBrightness.IsChecked = settings.BrightnessToast;
+        ChkLyrics.IsChecked = settings.LyricsEnabled;
         ChkChime.IsChecked = settings.FocusChime;
 
         TxtFocus.Text = settings.FocusMinutes.ToString();
@@ -98,6 +104,11 @@ public partial class SettingsWindow : Window
         else if (ReferenceEquals(sender, ChkBrightness))
         {
             _settings.Current.BrightnessToast = ChkBrightness.IsChecked == true;
+            _settings.Save();
+        }
+        else if (ReferenceEquals(sender, ChkLyrics))
+        {
+            _settings.Current.LyricsEnabled = ChkLyrics.IsChecked == true;
             _settings.Save();
         }
         else if (ReferenceEquals(sender, ChkChime))
@@ -165,6 +176,17 @@ public partial class SettingsWindow : Window
         {
             Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
         }
+    }
+
+    private void OnClearLyricsCacheClick(object sender, RoutedEventArgs e)
+    {
+        _lyrics.ClearCache();
+        MessageBox.Show(
+            this,
+            "Lyrics cache cleared. The next song will be fetched from LRCLIB again.",
+            "Dynamic Island",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
     }
 
     private void OnTitleBarMouseDown(object sender, MouseButtonEventArgs e)
