@@ -11,9 +11,11 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Notch selalu di atas** — hitam, membulat, menempel di tepi atas, tidak muncul di taskbar/Alt+Tab.
 - **Hover untuk membuka** — animasi spring halus, konten muncul ke bawah.
 - **Jam + tanggal** — jam di pill, tanggal & status di panel.
-- **Tab Music / Lyrics / Focus** — panel bisa berpindah antara media player, lirik, dan focus timer.
+- **Tab Music / Focus** — panel media dan focus timer, ukuran panel tetap 640×320.
 - **Transisi panel** — slide + fade halus saat pindah tab, highlight tab ikut bergeser.
-- **Lyrics** — synced lyrics dari LRCLIB, baris aktif di-highlight, auto-scroll, klik baris untuk seek,
+- **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik di kanan; media dan progress
+  bergeser ke kiri dengan animasi, tanpa tab terpisah dan tanpa kontrol start/pause ganda.
+  Synced lyrics dari LRCLIB, baris aktif di-highlight, auto-scroll, klik baris untuk seek,
   fallback plain lyrics, dan cache lokal.
 - **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), start/pause/reset, progress, session counter,
   chime, dan saran short/long break setiap 4 sesi. Saat timer jalan, pill menampilkan sisa waktu.
@@ -32,7 +34,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.3.0-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.4.0-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -46,8 +48,8 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 | Arahkan kursor ke pill | Panel terbuka |
 | Jauhkan kursor | Panel menutup (delay ~0,3 detik) |
 | Klik ikon **Music** | Panel media player (dengan animasi geser) |
-| Klik ikon **Lyrics** | Panel lirik (dengan animasi geser) |
 | Klik ikon **Focus** | Panel focus timer (dengan animasi geser) |
+| Klik ikon **speech bubble** di Music | Buka/tutup panel lirik; media bergeser ke kiri |
 | Klik baris lirik | Seek ke timestamp baris tersebut |
 | Klik ikon **gear** | Buka settings |
 | Klik progress bar | Seek ke posisi tersebut |
@@ -65,11 +67,13 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
 ### Lyrics
 
-- Buka tab **Lyrics**; lirik diambil dari [LRCLIB](https://lrclib.net) berdasarkan judul, artis, album, dan durasi.
+- Buka panel lirik lewat ikon **speech bubble** di tab Music. Media dan progress bar bergeser ke kiri;
+  panel lirik muncul di kanan. Kontrol start/pause tetap di kolom Music.
+- Lirik diambil dari [LRCLIB](https://lrclib.net) berdasarkan judul, artis, album, dan durasi.
 - Synced lyrics: baris aktif di-highlight dan auto-scroll. Klik baris untuk seek.
 - Kalau tidak ada synced lyrics, ditampilkan plain lyrics. Kalau tidak ada sama sekali, muncul pesan.
 - Tombol refresh untuk mencari ulang; hasil disimpan di cache lokal 30 hari.
-- Lirik hanya di-fetch saat tab Lyrics dibuka. Kirim hanya metadata track — tidak ada data pribadi.
+- Lirik hanya di-fetch saat panel lirik dibuka. Kirim hanya metadata track — tidak ada data pribadi.
 - Bisa dimatikan di **Settings → Lyrics → Fetch lyrics from LRCLIB**.
 - Cache bisa dihapus di **Settings → Data → Clear lyrics cache**.
 
@@ -112,7 +116,8 @@ src/DynamicIsland/
 ├─ MainWindow.xaml(.cs)       window topmost/transparent, posisi, hit-test, tray commands
 ├─ Controls/IslandView.*      notch, animasi, jam, mascot, media UI, toast, tab bar
 ├─ Controls/FocusView.*       UI focus timer (chips, countdown, progress, kontrol)
-├─ Controls/LyricsView.*      UI lirik (split player + lyrics, highlight, auto-scroll)
+├─ Controls/LyricsView.*      pane lirik (header, status, refresh, highlight, auto-scroll)
+├─ Controls/GridLengthAnimation.cs  animasi kolom media/lirik
 ├─ SettingsWindow.*           settings window dark (general, appearance, lyrics, focus, data)
 ├─ Services/
 │  ├─ MediaService.cs         WinRT GSMTC: now playing, artwork, kontrol

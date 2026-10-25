@@ -48,9 +48,7 @@ public partial class LyricsView : UserControl
         }
 
         _initialized = true;
-        _media.SnapshotChanged += OnMediaSnapshot;
         _lyrics.Changed += OnLyricsChanged;
-        UpdateMedia(_media.Current);
         RenderLyrics();
         _timer.Start();
     }
@@ -58,21 +56,8 @@ public partial class LyricsView : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _timer.Stop();
-        _media.SnapshotChanged -= OnMediaSnapshot;
         _lyrics.Changed -= OnLyricsChanged;
         _initialized = false;
-    }
-
-    private void OnMediaSnapshot(MediaSnapshot? snapshot)
-    {
-        if (Dispatcher.CheckAccess())
-        {
-            UpdateMedia(snapshot);
-        }
-        else
-        {
-            Dispatcher.BeginInvoke(new Action(() => UpdateMedia(snapshot)));
-        }
     }
 
     private void OnLyricsChanged()
@@ -85,46 +70,6 @@ public partial class LyricsView : UserControl
         {
             Dispatcher.BeginInvoke(new Action(RenderLyrics));
         }
-    }
-
-    private void UpdateMedia(MediaSnapshot? snapshot)
-    {
-        RefreshButton.Visibility = snapshot is null ? Visibility.Collapsed : Visibility.Visible;
-
-        if (snapshot is null)
-        {
-            TitleText.Text = "Nothing playing";
-            ArtistText.Text = "Play something to see lyrics";
-            ArtBrush.ImageSource = null;
-            ArtFallback.Visibility = Visibility.Visible;
-            ArtGlyph.Visibility = Visibility.Visible;
-            PlayGlyph.Text = "\uE768";
-            PlayButton.IsEnabled = false;
-            ProgressFill.Width = 0;
-            TimeText.Text = string.Empty;
-            return;
-        }
-
-        TitleText.Text = snapshot.Title;
-        ArtistText.Text = string.IsNullOrWhiteSpace(snapshot.Artist) ? "Unknown artist" : snapshot.Artist;
-
-        if (snapshot.Artwork is not null)
-        {
-            ArtBrush.ImageSource = snapshot.Artwork;
-            ArtFallback.Visibility = Visibility.Collapsed;
-            ArtGlyph.Visibility = Visibility.Collapsed;
-        }
-        else
-        {
-            ArtBrush.ImageSource = null;
-            ArtFallback.Visibility = Visibility.Visible;
-            ArtGlyph.Visibility = Visibility.Visible;
-        }
-
-        PlayGlyph.Text = snapshot.IsPlaying ? "\uE769" : "\uE768";
-        PlayButton.IsEnabled = true;
-        RefreshButton.IsEnabled = !_lyrics.IsLoading;
-        UpdateProgress();
     }
 
     private void RenderLyrics()
@@ -265,8 +210,6 @@ public partial class LyricsView : UserControl
 
     private void UpdatePlayback()
     {
-        UpdateProgress();
-
         var document = _lyrics.Current;
         if (document?.IsSynced != true || _lineVisuals.Count == 0 || !IsVisible)
         {
@@ -356,33 +299,6 @@ public partial class LyricsView : UserControl
         return result;
     }
 
-    private void UpdateProgress()
-    {
-        var snapshot = _media.Current;
-        if (snapshot is null)
-        {
-            ProgressFill.Width = 0;
-            TimeText.Text = string.Empty;
-            return;
-        }
-
-        var duration = snapshot.Duration;
-        var position = _media.EstimatedPosition;
-        var ratio = duration.TotalMilliseconds > 0
-            ? Math.Clamp(position.TotalMilliseconds / duration.TotalMilliseconds, 0, 1)
-            : 0;
-
-        var width = ProgressHit.ActualWidth;
-        if (width > 0)
-        {
-            ProgressFill.Width = width * ratio;
-        }
-
-        TimeText.Text = duration > TimeSpan.Zero
-            ? $"{FormatTime(position)} / {FormatTime(duration)}"
-            : string.Empty;
-    }
-
     private void ShowMessage(string message)
     {
         LyricsMessage.Text = message;
@@ -396,50 +312,9 @@ public partial class LyricsView : UserControl
         LyricsScroll.Visibility = Visibility.Visible;
     }
 
-    private void OnProgressSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        UpdateProgress();
-    }
-
-    private void OnProgressMouseDown(object sender, MouseButtonEventArgs e)
-    {
-        var snapshot = _media.Current;
-        if (snapshot is null || snapshot.Duration <= TimeSpan.Zero)
-        {
-            return;
-        }
-
-        var width = ProgressHit.ActualWidth;
-        if (width <= 0)
-        {
-            return;
-        }
-
-        var ratio = Math.Clamp(e.GetPosition(ProgressHit).X / width, 0, 1);
-        _ = _media.SeekAsync(TimeSpan.FromTicks((long)(snapshot.Duration.Ticks * ratio)));
-        e.Handled = true;
-    }
-
-    private void OnPlayPauseClick(object sender, RoutedEventArgs e)
-    {
-        _ = _media.TogglePlayPauseAsync();
-    }
-
     private void OnRefreshClick(object sender, RoutedEventArgs e)
     {
         _ = _lyrics.LoadAsync(_media.Current, force: true);
-    }
-
-    private static string FormatTime(TimeSpan value)
-    {
-        if (value < TimeSpan.Zero)
-        {
-            value = TimeSpan.Zero;
-        }
-
-        return value.TotalHours >= 1
-            ? value.ToString(@"h\:mm\:ss", System.Globalization.CultureInfo.InvariantCulture)
-            : value.ToString(@"m\:ss", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static Brush CreateFrozenBrush(Color color)
