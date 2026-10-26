@@ -38,6 +38,7 @@ public partial class IslandView : UserControl
     private static readonly Brush FocusPausedBrush = new SolidColorBrush(Color.FromArgb(0x99, 0xFF, 0xB8, 0x6B));
     private static readonly Brush LyricsButtonInactiveBrush = new SolidColorBrush(Color.FromRgb(0x94, 0x94, 0x9C));
     private static readonly Brush LyricsButtonActiveBrush = new SolidColorBrush(Color.FromArgb(0x33, 0x7C, 0x9C, 0xFF));
+    private static readonly Brush WaterBrush = new SolidColorBrush(Color.FromRgb(0x7F, 0xB8, 0xFF));
 
     private readonly SettingsService _settings;
     private readonly MediaService _media;
@@ -49,6 +50,7 @@ public partial class IslandView : UserControl
     private readonly FocusView _focusView;
     private readonly LyricsService _lyrics;
     private readonly LyricsView _lyricsView;
+    private readonly WaterService _water;
 
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _hoverTimer;
@@ -69,6 +71,7 @@ public partial class IslandView : UserControl
     private bool _initialized;
     private bool _toastVisible;
     private int _toastToken;
+    private Action? _toastClick;
 
     private double _currentWidth = 260;
     private double _currentHeight = 40;
@@ -104,7 +107,8 @@ public partial class IslandView : UserControl
         BatteryService battery,
         NetworkService network,
         FocusService focus,
-        LyricsService lyrics)
+        LyricsService lyrics,
+        WaterService water)
     {
         _settings = settings;
         _media = media;
@@ -114,6 +118,7 @@ public partial class IslandView : UserControl
         _network = network;
         _focus = focus;
         _lyrics = lyrics;
+        _water = water;
 
         InitializeComponent();
 
@@ -197,6 +202,7 @@ public partial class IslandView : UserControl
         _snapshot = _media.Current;
         UpdateMediaUI(_snapshot);
         UpdateProgress();
+        UpdateWaterWidget();
 
         _media.SnapshotChanged += OnMediaSnapshot;
         _audio.VolumeChanged += OnVolumeChanged;
@@ -206,6 +212,8 @@ public partial class IslandView : UserControl
         _focus.Tick += OnFocusTick;
         _focus.StateChanged += OnFocusStateChanged;
         _focus.Completed += OnFocusCompleted;
+        _water.ReminderDue += OnWaterReminderDue;
+        _water.StateChanged += OnWaterStateChanged;
 
         _wasFocusRunning = _focus.IsRunning;
         UpdateTabVisuals();
@@ -238,6 +246,8 @@ public partial class IslandView : UserControl
         _focus.Tick -= OnFocusTick;
         _focus.StateChanged -= OnFocusStateChanged;
         _focus.Completed -= OnFocusCompleted;
+        _water.ReminderDue -= OnWaterReminderDue;
+        _water.StateChanged -= OnWaterStateChanged;
         _initialized = false;
     }
 
@@ -272,6 +282,7 @@ public partial class IslandView : UserControl
         }
 
         UpdateIdleVisual();
+        UpdateWaterWidget();
     }
 
     private void CheckHover()
@@ -840,6 +851,101 @@ public partial class IslandView : UserControl
         SettingsRequested?.Invoke();
     }
 
+    private void OnWaterReminderDue()
+    {
+        if (Dispatcher.CheckAccess())
+        {
+            ShowWaterReminder();
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(new Action(ShowWaterReminder));
+        }
+    }
+
+    private void ShowWaterReminder()
+    {
+        var count = _water.GlassesToday;
+        var goal = _water.Goal;
+
+        if (_water.GoalReached)
+        {
+            ShowToast(null, $"Goal reached \u00B7 {goal}/{goal}", 1, 2200, drop: true);
+            return;
+        }
+
+        ShowToast(
+            null,
+            $"Time to drink \u00B7 {count}/{goal}",
+            count / (double)goal,
+            6000,
+            OnWaterToastClick,
+            drop: true);
+    }
+
+    private void OnWaterToastClick()
+    {
+        ShowWaterConfirmation(_water.LogDrink());
+    }
+
+    private void OnWaterClick(object sender, RoutedEventArgs e)
+    {
+        ShowWaterConfirmation(_water.LogDrink());
+    }
+
+    private void ShowWaterConfirmation(bool logged)
+    {
+        var count = _water.GlassesToday;
+        var goal = _water.Goal;
+
+        ShowToast(
+            null,
+            logged
+                ? $"Glass logged \u00B7 {count}/{goal}"
+                : $"Goal reached \u00B7 {goal}/{goal}",
+            count / (double)goal,
+            1800,
+            drop: true);
+    }
+
+    private void OnWaterStateChanged()
+    {
+        if (Dispatcher.CheckAccess())
+        {
+            UpdateWaterWidget();
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(new Action(UpdateWaterWidget));
+        }
+    }
+
+    private void UpdateWaterWidget()
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        var enabled = _settings.Current.WaterReminderEnabled;
+        WaterButton.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+
+        if (!enabled)
+        {
+            return;
+        }
+
+        var count = _water.GlassesToday;
+        var goal = _water.Goal;
+        var reached = _water.GoalReached;
+
+        WaterCountText.Text = $"{count}/{goal}";
+        WaterButton.Foreground = reached ? GreenBrush : WaterBrush;
+        WaterButton.ToolTip = reached
+            ? $"Goal reached \u00B7 {goal} glasses today"
+            : $"{count} of {goal} glasses today \u00B7 click to log";
+    }
+
     private void UpdateIdleVisual()
     {
         if (!_initialized)
@@ -1200,7 +1306,13 @@ public partial class IslandView : UserControl
         WifiGlyph.Opacity = connected ? 1 : 0.25;
     }
 
-    private void ShowToast(string glyph, string label, double? ratio, int durationMs = 1700)
+    private void ShowToast(
+        string? glyph,
+        string label,
+        double? ratio,
+        int durationMs = 1700,
+        Action? onClick = null,
+        bool drop = false)
     {
         _toastToken++;
         _toastVisible = true;
@@ -1215,7 +1327,9 @@ public partial class IslandView : UserControl
         ClockText.Opacity = 0;
         EyesCanvas.Opacity = 0;
 
-        ToastGlyph.Text = glyph;
+        ToastGlyph.Text = glyph ?? string.Empty;
+        ToastGlyph.Visibility = drop ? Visibility.Collapsed : Visibility.Visible;
+        ToastDrop.Visibility = drop ? Visibility.Visible : Visibility.Collapsed;
         ToastLabel.Text = label;
 
         if (ratio is double value)
@@ -1228,6 +1342,10 @@ public partial class IslandView : UserControl
             ToastTrack.Visibility = Visibility.Collapsed;
         }
 
+        _toastClick = onClick;
+        ToastBorder.IsHitTestVisible = onClick is not null;
+        ToastBorder.Cursor = onClick is not null ? Cursors.Hand : Cursors.Arrow;
+
         ToastBorder.Visibility = Visibility.Visible;
         var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(140));
         ToastBorder.BeginAnimation(OpacityProperty, fade);
@@ -1237,8 +1355,25 @@ public partial class IslandView : UserControl
         _toastTimer.Start();
     }
 
+    private void OnToastMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        var action = _toastClick;
+        if (action is null)
+        {
+            return;
+        }
+
+        _toastClick = null;
+        e.Handled = true;
+        action();
+    }
+
     private void HideToast()
     {
+        _toastClick = null;
+        ToastBorder.IsHitTestVisible = false;
+        ToastBorder.Cursor = Cursors.Arrow;
+
         var token = ++_toastToken;
         var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(220));
         fade.Completed += (_, _) =>

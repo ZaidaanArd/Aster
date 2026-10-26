@@ -12,6 +12,7 @@ public partial class MainWindow : Window
     private readonly FullscreenWatcher _fullscreen;
     private readonly FocusService _focus;
     private readonly LyricsService _lyrics;
+    private readonly WaterService _water;
     private readonly IslandView _island;
 
     private HwndSource? _source;
@@ -28,16 +29,21 @@ public partial class MainWindow : Window
         NetworkService network,
         FullscreenWatcher fullscreen,
         FocusService focus,
-        LyricsService lyrics)
+        LyricsService lyrics,
+        WaterService water)
     {
         _settings = settings;
         _fullscreen = fullscreen;
         _focus = focus;
         _lyrics = lyrics;
+        _water = water;
 
         InitializeComponent();
 
-        _island = new IslandView(settings, media, audio, brightness, battery, network, focus, lyrics);
+        _water.IsSuppressed = true;
+        IsVisibleChanged += OnIslandVisibilityChanged;
+
+        _island = new IslandView(settings, media, audio, brightness, battery, network, focus, lyrics, water);
         _island.SettingsRequested += ShowSettings;
         IslandHost.Children.Add(_island);
 
@@ -91,7 +97,13 @@ public partial class MainWindow : Window
     {
         _island.SettingsRequested -= ShowSettings;
         _fullscreen.Changed -= OnFullscreenChanged;
+        IsVisibleChanged -= OnIslandVisibilityChanged;
         _source?.RemoveHook(WndProc);
+    }
+
+    private void OnIslandVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        _water.IsSuppressed = !IsVisible;
     }
 
     private void PositionWindow()
@@ -272,7 +284,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        _settingsWindow = new SettingsWindow(_settings, _lyrics, this, _island.CurrentPanelHeight);
+        _settingsWindow = new SettingsWindow(_settings, _lyrics, _water, this, _island.CurrentPanelHeight);
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();
         _settingsWindow.Activate();

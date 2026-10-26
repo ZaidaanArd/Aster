@@ -69,7 +69,7 @@ public sealed class LyricsService : IDisposable
         Directory.CreateDirectory(_cacheDirectory);
 
         _http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd("DynamicIsland/0.4.1 (Windows; WPF)");
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd("DynamicIsland/0.5.0 (Windows; WPF)");
 
         _lastEnabled = settings.Current.LyricsEnabled;
         _settings.Changed += OnSettingsChanged;

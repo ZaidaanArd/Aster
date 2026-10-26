@@ -12,6 +12,13 @@ public sealed class AppSettings
     public bool VolumeToast { get; set; } = true;
     public bool BrightnessToast { get; set; } = true;
     public bool LyricsEnabled { get; set; } = true;
+    public bool WaterReminderEnabled { get; set; }
+    public int WaterIntervalMinutes { get; set; } = 60;
+    public int WaterActiveStartHour { get; set; } = 8;
+    public int WaterActiveEndHour { get; set; } = 22;
+    public int WaterDailyGoal { get; set; } = 8;
+    public int WaterGlassesToday { get; set; }
+    public string WaterDate { get; set; } = string.Empty;
     public int FocusMinutes { get; set; } = 25;
     public int ShortBreakMinutes { get; set; } = 5;
     public int LongBreakMinutes { get; set; } = 15;

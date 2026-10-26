@@ -10,25 +10,31 @@ public partial class SettingsWindow : Window
 {
     private readonly SettingsService _settings;
     private readonly LyricsService _lyrics;
+    private readonly WaterService _water;
     private readonly MainWindow _mainWindow;
     private bool _loading;
 
     public SettingsWindow(
         SettingsService settings,
         LyricsService lyrics,
+        WaterService water,
         MainWindow mainWindow,
         double islandHeight)
     {
         _settings = settings;
         _lyrics = lyrics;
+        _water = water;
         _mainWindow = mainWindow;
 
         InitializeComponent();
         PositionBelowIsland(islandHeight);
         LoadFromSettings();
 
+        _water.StateChanged += OnWaterStateChanged;
+        Closed += OnSettingsWindowClosed;
+
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
-        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.4.1"}";
+        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.5.0"}";
         DataPathText.Text = _settings.FilePath;
     }
 
@@ -65,12 +71,18 @@ public partial class SettingsWindow : Window
         ChkBrightness.IsChecked = settings.BrightnessToast;
         ChkLyrics.IsChecked = settings.LyricsEnabled;
         ChkChime.IsChecked = settings.FocusChime;
+        ChkWater.IsChecked = settings.WaterReminderEnabled;
 
         TxtFocus.Text = settings.FocusMinutes.ToString();
         TxtShort.Text = settings.ShortBreakMinutes.ToString();
         TxtLong.Text = settings.LongBreakMinutes.ToString();
+        TxtWaterInterval.Text = Math.Clamp(settings.WaterIntervalMinutes, 1, 240).ToString();
+        TxtWaterStart.Text = Math.Clamp(settings.WaterActiveStartHour, 0, 23).ToString();
+        TxtWaterEnd.Text = Math.Clamp(settings.WaterActiveEndHour, 0, 23).ToString();
+        TxtWaterGoal.Text = Math.Clamp(settings.WaterDailyGoal, 1, 20).ToString();
 
         _loading = false;
+        UpdateWaterStatus();
     }
 
     private void OnToggleChanged(object sender, RoutedEventArgs e)
@@ -115,6 +127,12 @@ public partial class SettingsWindow : Window
         {
             _settings.Current.FocusChime = ChkChime.IsChecked == true;
             _settings.Save();
+        }
+        else if (ReferenceEquals(sender, ChkWater))
+        {
+            _settings.Current.WaterReminderEnabled = ChkWater.IsChecked == true;
+            _settings.Save();
+            UpdateWaterStatus();
         }
     }
 
@@ -167,6 +185,114 @@ public partial class SettingsWindow : Window
             ApplyDurations();
             Keyboard.ClearFocus();
         }
+    }
+
+    private void ApplyWaterSettings()
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        var interval = ParseRange(TxtWaterInterval.Text, _settings.Current.WaterIntervalMinutes, 1, 240);
+        var start = ParseRange(TxtWaterStart.Text, _settings.Current.WaterActiveStartHour, 0, 23);
+        var end = ParseRange(TxtWaterEnd.Text, _settings.Current.WaterActiveEndHour, 0, 23);
+        var goal = ParseRange(TxtWaterGoal.Text, _settings.Current.WaterDailyGoal, 1, 20);
+
+        _settings.Current.WaterIntervalMinutes = interval;
+        _settings.Current.WaterActiveStartHour = start;
+        _settings.Current.WaterActiveEndHour = end;
+        _settings.Current.WaterDailyGoal = goal;
+
+        TxtWaterInterval.Text = interval.ToString();
+        TxtWaterStart.Text = start.ToString();
+        TxtWaterEnd.Text = end.ToString();
+        TxtWaterGoal.Text = goal.ToString();
+
+        _settings.Save();
+        UpdateWaterStatus();
+    }
+
+    private static int ParseRange(string text, int fallback, int minimum, int maximum)
+    {
+        if (!int.TryParse(text, out var value))
+        {
+            value = fallback;
+        }
+
+        return Math.Clamp(value, minimum, maximum);
+    }
+
+    private void OnWaterLostFocus(object sender, RoutedEventArgs e)
+    {
+        ApplyWaterSettings();
+    }
+
+    private void OnWaterKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            ApplyWaterSettings();
+            Keyboard.ClearFocus();
+        }
+    }
+
+    private void OnWaterLogClick(object sender, RoutedEventArgs e)
+    {
+        _water.LogDrink();
+        UpdateWaterStatus();
+    }
+
+    private void OnWaterPreviewClick(object sender, RoutedEventArgs e)
+    {
+        _water.Preview();
+        UpdateWaterStatus();
+    }
+
+    private void OnWaterResetClick(object sender, RoutedEventArgs e)
+    {
+        _water.ResetToday();
+        UpdateWaterStatus();
+    }
+
+    private void OnWaterStateChanged()
+    {
+        if (Dispatcher.CheckAccess())
+        {
+            UpdateWaterStatus();
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(new Action(UpdateWaterStatus));
+        }
+    }
+
+    private void UpdateWaterStatus()
+    {
+        var settings = _settings.Current;
+        var count = _water.GlassesToday;
+        var goal = _water.Goal;
+        var text = $"{count} of {goal} glasses today";
+
+        if (!settings.WaterReminderEnabled)
+        {
+            text += " \u00B7 reminders off";
+        }
+        else if (_water.GoalReached)
+        {
+            text += " \u00B7 goal reached";
+        }
+        else if (_water.NextReminderAt is { } next)
+        {
+            text += $" \u00B7 next {next:HH:mm}";
+        }
+
+        WaterStatusText.Text = text;
+    }
+
+    private void OnSettingsWindowClosed(object? sender, EventArgs e)
+    {
+        _water.StateChanged -= OnWaterStateChanged;
     }
 
     private void OnOpenDataFolderClick(object sender, RoutedEventArgs e)

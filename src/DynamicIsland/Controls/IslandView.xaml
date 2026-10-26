@@ -116,6 +116,31 @@
                                    Foreground="{StaticResource TextSecondary}"
                                    VerticalAlignment="Center" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button x:Name="WaterButton"
+                                    Style="{StaticResource GlyphButton}"
+                                    Width="40"
+                                    Height="18"
+                                    Padding="0"
+                                    Margin="0,0,8,0"
+                                    Foreground="{StaticResource AccentWater}"
+                                    Visibility="Collapsed"
+                                    Click="OnWaterClick"
+                                    ToolTip="Log a glass of water">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="8"
+                                          Height="11"
+                                          Stretch="Fill"
+                                          VerticalAlignment="Center"
+                                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                          Data="M4,0 C4,0 0.8,4.4 0.8,7 A3.2,3.2 0 0 0 7.2,7 C7.2,4.4 4,0 4,0 Z" />
+                                    <TextBlock x:Name="WaterCountText"
+                                               FontFamily="{StaticResource UiFont}"
+                                               FontSize="9.5"
+                                               Margin="4,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Text="0/8" />
+                                </StackPanel>
+                            </Button>
                             <TextBlock x:Name="WifiGlyph"
                                        Style="{StaticResource Glyph}"
                                        Text="&#xE701;"
@@ -150,18 +175,24 @@
 
                     <!-- Music (with the optional lyrics pane) and Focus -->
                     <Grid x:Name="SlideHost" Grid.Row="1" ClipToBounds="True">
-                        <StackPanel x:Name="MusicView" Orientation="Horizontal" Opacity="1" ClipToBounds="True">
-                            <StackPanel.RenderTransform>
+                        <Grid x:Name="MusicView"
+                              Width="464"
+                              Height="170"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Top"
+                              Opacity="1"
+                              ClipToBounds="True">
+                            <Grid.RenderTransform>
                                 <TranslateTransform x:Name="MusicTranslate" />
-                            </StackPanel.RenderTransform>
+                            </Grid.RenderTransform>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="152" />
+                                <RowDefinition Height="18" />
+                            </Grid.RowDefinitions>
 
-                            <Grid x:Name="MusicMedia" Width="464" Height="170">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="18" />
-                                </Grid.RowDefinitions>
-
-                                <Grid x:Name="MusicPanel" Grid.Row="0" Margin="0,8,0,4">
+                            <StackPanel x:Name="MusicContent" Grid.Row="0" Orientation="Horizontal">
+                                <Grid x:Name="MusicMedia" Width="464" Height="152">
+                                    <Grid x:Name="MusicPanel" Margin="0,8,0,4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="84" />
                                         <ColumnDefinition Width="16" />
@@ -286,41 +317,42 @@
                                         </Grid>
                                     </Grid>
                                 </Grid>
+                                </Grid>
 
-                                <Grid x:Name="MusicFooter" Grid.Row="1">
-                                    <TextBlock x:Name="FooterText"
+                                <!-- Lyrics pane: the LyricsView is added here in code-behind -->
+                                <Grid x:Name="LyricsPane"
+                                      Width="0"
+                                      Height="152"
+                                      Visibility="Collapsed"
+                                      ClipToBounds="True"
+                                      Background="#000000">
+                                    <Grid.RenderTransform>
+                                        <TranslateTransform x:Name="LyricsTranslate" />
+                                    </Grid.RenderTransform>
+                                </Grid>
+                            </StackPanel>
+
+                            <Grid x:Name="MusicFooter" Grid.Row="1" Width="464" HorizontalAlignment="Left">
+                                <TextBlock x:Name="FooterText"
+                                           FontFamily="{StaticResource UiFont}"
+                                           FontSize="10"
+                                           Foreground="{StaticResource TextTertiary}"
+                                           VerticalAlignment="Bottom" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                    <Ellipse x:Name="PlayingDot"
+                                             Width="5"
+                                             Height="5"
+                                             Fill="{StaticResource AccentGreen}"
+                                             Margin="0,0,5,0"
+                                             VerticalAlignment="Center"
+                                             Opacity="0" />
+                                    <TextBlock x:Name="FooterSource"
                                                FontFamily="{StaticResource UiFont}"
                                                FontSize="10"
-                                               Foreground="{StaticResource TextTertiary}"
-                                               VerticalAlignment="Bottom" />
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                                        <Ellipse x:Name="PlayingDot"
-                                                 Width="5"
-                                                 Height="5"
-                                                 Fill="{StaticResource AccentGreen}"
-                                                 Margin="0,0,5,0"
-                                                 VerticalAlignment="Center"
-                                                 Opacity="0" />
-                                        <TextBlock x:Name="FooterSource"
-                                                   FontFamily="{StaticResource UiFont}"
-                                                   FontSize="10"
-                                                   Foreground="{StaticResource TextSecondary}" />
-                                    </StackPanel>
-                                </Grid>
+                                               Foreground="{StaticResource TextSecondary}" />
+                                </StackPanel>
                             </Grid>
-
-                            <!-- Lyrics pane: the LyricsView is added here in code-behind -->
-                            <Grid x:Name="LyricsPane"
-                                  Width="0"
-                                  Height="170"
-                                  Visibility="Collapsed"
-                                  ClipToBounds="True"
-                                  Background="#000000">
-                                <Grid.RenderTransform>
-                                    <TranslateTransform x:Name="LyricsTranslate" />
-                                </Grid.RenderTransform>
-                            </Grid>
-                        </StackPanel>
+                        </Grid>
 
                         <Grid x:Name="FocusHost" Visibility="Collapsed" Opacity="0">
                             <Grid.RenderTransform>
@@ -407,7 +439,8 @@
                         CornerRadius="17"
                         Opacity="0"
                         Visibility="Collapsed"
-                        IsHitTestVisible="False">
+                        IsHitTestVisible="False"
+                        MouseLeftButtonDown="OnToastMouseDown">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -421,6 +454,16 @@
                                    Foreground="#F2FFFFFF"
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0" />
+                        <Path x:Name="ToastDrop"
+                              Grid.Column="0"
+                              Width="9"
+                              Height="12"
+                              Margin="0,0,8,0"
+                              Stretch="Fill"
+                              VerticalAlignment="Center"
+                              Fill="{StaticResource AccentWater}"
+                              Visibility="Collapsed"
+                              Data="M4,0 C4,0 0.8,4.4 0.8,7 A3.2,3.2 0 0 0 7.2,7 C7.2,4.4 4,0 4,0 Z" />
                         <TextBlock x:Name="ToastLabel"
                                    Grid.Column="1"
                                    FontFamily="{StaticResource UiFont}"

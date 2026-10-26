@@ -20,6 +20,8 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
   fallback plain lyrics, dan cache lokal.
 - **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), start/pause/reset, progress, session counter,
   chime, dan saran short/long break setiap 4 sesi. Saat timer jalan, pill menampilkan sisa waktu.
+- **Water reminder** — toast droplet di pill sesuai interval, header counter `3/8`, klik untuk
+  mencatat gelas. Reminder berhenti saat goal tercapai dan ditahan saat island disembunyikan.
 - **Media player** — judul, artis, album art, progress, play/pause, previous, next, dan seek.
   Mendukung Spotify, Apple Music, YouTube/Chrome/Edge/Firefox via Windows media session.
 - **Volume overlay** — muncul otomatis saat volume berubah.
@@ -35,7 +37,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.4.1-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.5.0-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -52,6 +54,8 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 | Klik ikon **Focus** | Panel focus timer (dengan animasi geser) |
 | Klik ikon **speech bubble** di Music | Buka/tutup panel lirik; media bergeser ke kiri |
 | Klik baris lirik | Seek ke timestamp baris tersebut |
+| Klik droplet `3/8` di header | Catat satu gelas air |
+| Klik toast water reminder | Catat satu gelas air |
 | Klik ikon **gear** | Buka settings |
 | Klik progress bar | Seek ke posisi tersebut |
 | Klik ikon tray | Buka menu pengaturan |
@@ -65,6 +69,21 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
   toast + chime dan tombol **Start break** (long break disarankan setiap 4 sesi).
 - Durasi bisa diubah di **Settings → Focus** (1–180 menit).
 - Timer bersifat **session-only**: kalau app ditutup, timer reset. Session counter juga reset saat app dibuka lagi.
+
+### Water reminder
+
+- Aktifkan di **Settings → Water → Water reminder**.
+- Atur **interval** (1–240 menit), **active hours** (0–23), dan **daily goal** (1–20 gelas).
+  Active hours mendukung rentang lewat tengah malam, misalnya 22 → 08. Kalau start = end,
+  reminder aktif 24 jam.
+- Saat waktunya, toast droplet muncul di pill meskipun panel tertutup:
+  `Time to drink · 3/8`. Klik toast untuk mencatat satu gelas.
+- Header panel menampilkan `💧 3/8` saat fitur aktif; klik untuk mencatat gelas tanpa menunggu reminder.
+  Angka berubah hijau saat goal tercapai.
+- Counter disimpan di `settings.json` dan reset otomatis saat tanggal berganti.
+- Reminder berhenti setelah goal harian tercapai, dan ditahan saat island disembunyikan
+  (fullscreen atau hide dari tray).
+- Tombol **Log a glass**, **Preview**, dan **Reset today** tersedia di Settings untuk testing.
 
 ### Lyrics
 
@@ -119,11 +138,12 @@ src/DynamicIsland/
 ├─ Controls/IslandView.*      notch, animasi, jam, mascot, media UI, toast, tab bar
 ├─ Controls/FocusView.*       UI focus timer (chips, countdown, progress, kontrol)
 ├─ Controls/LyricsView.*      pane lirik (header, status, refresh, highlight, auto-scroll)
-├─ SettingsWindow.*           settings window dark (general, appearance, lyrics, focus, data)
+├─ SettingsWindow.*           settings window dark (general, appearance, lyrics, focus, water, data)
 ├─ Services/
 │  ├─ MediaService.cs         WinRT GSMTC: now playing, artwork, kontrol
 │  ├─ LyricsService.cs        LRCLIB: fetch, parse LRC, cache, cancellation
 │  ├─ FocusService.cs         Pomodoro: phase, countdown, session counter, break suggestion
+│  ├─ WaterService.cs         water reminder: interval, active hours, goal, daily count
 │  ├─ AudioService.cs         NAudio: volume + notifikasi
 │  ├─ BrightnessService.cs    WMI brightness
 │  ├─ BatteryService.cs       baterai/charging
@@ -146,12 +166,13 @@ src/DynamicIsland/
 - **Lyrics** tergantung ketersediaan di LRCLIB; beberapa track tidak punya lirik atau server bisa sedang sibuk. Tombol refresh tersedia.
 - **Fullscreen exclusive** tidak bisa ditimpa; island akan disembunyikan.
 - **Focus timer** belum persist kalau app ditutup atau PC sleep; timer dihitung wall-clock.
+- **Water reminder** hanya muncul saat island terlihat; reminder yang jatuh tempo saat app tersembunyi
+  akan ditampilkan begitu island muncul lagi. Counter disimpan per tanggal lokal.
 - **Installer belum ditandatangani**, sehingga SmartScreen memberi peringatan.
 
 ## Roadmap
 
-Fitur Nusa yang belum ada di versi ini: water reminder, to-do dengan reminder,
-dan file shelf drag & drop.
+Fitur Nusa yang belum ada di versi ini: to-do dengan reminder dan file shelf drag & drop.
 
 ## Lisensi
 
