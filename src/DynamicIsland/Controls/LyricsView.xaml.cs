@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using DynamicIsland.Services;
 
@@ -9,19 +11,31 @@ namespace DynamicIsland.Controls;
 
 public partial class LyricsView : UserControl
 {
+    private const int ScrollDurationMs = 220;
+
     private static readonly Brush InactiveLineBrush = CreateFrozenBrush(Color.FromRgb(0x8C, 0x8C, 0x96));
     private static readonly Brush ActiveLineBrush = CreateFrozenBrush(Color.FromRgb(0xF5, 0xF5, 0xF7));
-    private static readonly Brush ActiveLineBackground = CreateFrozenBrush(Color.FromArgb(0x18, 0xFF, 0xFF, 0xFF));
+    private static readonly Brush PlainLineBrush = CreateFrozenBrush(Color.FromRgb(0xA8, 0xA8, 0xB0));
+    private static readonly Brush LyricsAccentBrush = CreateFrozenBrush(Color.FromRgb(0x8F, 0xA8, 0xFF));
+    private static readonly Brush MutedDotBrush = CreateFrozenBrush(Color.FromRgb(0x5E, 0x5E, 0x66));
+    private static readonly Brush ActiveLineBackground = CreateFrozenGradient(
+        Color.FromArgb(0x38, 0x7C, 0x9C, 0xFF),
+        Color.FromArgb(0x08, 0x7C, 0x9C, 0xFF));
     private static readonly FontFamily UiFont = new("Segoe UI Variable Display, Segoe UI");
 
     private readonly MediaService _media;
     private readonly LyricsService _lyrics;
     private readonly DispatcherTimer _timer;
+    private readonly DispatcherTimer _scrollTimer;
     private readonly List<LyricsLineVisual> _lineVisuals = new();
 
     private int _currentLine = -1;
     private bool _initialized;
     private bool _rendering;
+    private bool _loadingVisuals;
+    private double _scrollFrom;
+    private double _scrollTo;
+    private long _scrollStartTicks;
 
     public LyricsView(MediaService media, LyricsService lyrics)
     {
@@ -35,6 +49,12 @@ public partial class LyricsView : UserControl
             Interval = TimeSpan.FromMilliseconds(250)
         };
         _timer.Tick += (_, _) => UpdatePlayback();
+
+        _scrollTimer = new DispatcherTimer(DispatcherPriority.Render)
+        {
+            Interval = TimeSpan.FromMilliseconds(15)
+        };
+        _scrollTimer.Tick += OnScrollTick;
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -56,6 +76,8 @@ public partial class LyricsView : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _timer.Stop();
+        _scrollTimer.Stop();
+        StopLoadingVisuals();
         _lyrics.Changed -= OnLyricsChanged;
         _initialized = false;
     }
@@ -93,6 +115,7 @@ public partial class LyricsView : UserControl
         _rendering = true;
         try
         {
+            _scrollTimer.Stop();
             LyricsStack.Children.Clear();
             _lineVisuals.Clear();
             _currentLine = -1;
@@ -102,31 +125,36 @@ public partial class LyricsView : UserControl
 
             if (_lyrics.IsLoading)
             {
-                LyricsStatus.Text = "Searching...";
+                StartLoadingVisuals();
+                SetStatus("SEARCHING", LyricsAccentBrush, "Fetching lyrics from LRCLIB");
                 ShowMessage("Searching lyrics...");
                 return;
             }
 
+            StopLoadingVisuals();
+
             var document = _lyrics.Current;
             if (document is null)
             {
-                LyricsStatus.Text = "LRCLIB";
-                ShowMessage(_media.Current is null
-                    ? "Play something to see lyrics"
-                    : _lyrics.StatusMessage ?? "Lyrics unavailable");
+                SetStatus("LRCLIB", MutedDotBrush, "Lyrics from LRCLIB");
+                ShowMessage(
+                    _media.Current is null
+                        ? "Play something to see lyrics"
+                        : _lyrics.StatusMessage ?? "Lyrics unavailable",
+                    "\uE8D6");
                 return;
             }
 
             if (document.IsInstrumental)
             {
-                LyricsStatus.Text = "Instrumental";
-                ShowMessage("Instrumental track");
+                SetStatus("INSTRUMENTAL", MutedDotBrush, "Instrumental track");
+                ShowMessage("Instrumental track", "\uE8D6");
                 return;
             }
 
             if (document.IsSynced && document.Lines.Count > 0)
             {
-                LyricsStatus.Text = "Synced \u00B7 LRCLIB";
+                SetStatus("SYNCED", LyricsAccentBrush, "Synced lyrics \u00B7 LRCLIB");
                 HideMessage();
 
                 for (var index = 0; index < document.Lines.Count; index++)
@@ -146,7 +174,7 @@ public partial class LyricsView : UserControl
 
             if (!string.IsNullOrWhiteSpace(document.PlainLyrics))
             {
-                LyricsStatus.Text = "Plain \u00B7 LRCLIB";
+                SetStatus("PLAIN", MutedDotBrush, "Plain lyrics \u00B7 LRCLIB");
                 HideMessage();
 
                 var text = new TextBlock
@@ -154,17 +182,18 @@ public partial class LyricsView : UserControl
                     Text = document.PlainLyrics.Trim(),
                     TextWrapping = TextWrapping.Wrap,
                     FontFamily = UiFont,
-                    FontSize = 12,
-                    Foreground = InactiveLineBrush,
-                    LineHeight = 19,
-                    Margin = new Thickness(2, 0, 2, 0)
+                    FontSize = 11.5,
+                    Foreground = PlainLineBrush,
+                    LineHeight = 18,
+                    LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
+                    Margin = new Thickness(7, 2, 5, 2)
                 };
                 LyricsStack.Children.Add(text);
                 return;
             }
 
-            LyricsStatus.Text = "LRCLIB";
-            ShowMessage("No lyrics found for this track");
+            SetStatus("LRCLIB", MutedDotBrush, "Lyrics from LRCLIB");
+            ShowMessage("No lyrics found for this track", "\uE8D6");
         }
         finally
         {
@@ -181,22 +210,49 @@ public partial class LyricsView : UserControl
             FontFamily = UiFont,
             FontSize = 11.5,
             Foreground = InactiveLineBrush,
-            LineHeight = 18
+            LineHeight = 18,
+            LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
+            Margin = new Thickness(7, 2, 5, 2),
+            Opacity = 0.7
         };
+
+        var highlight = new Border
+        {
+            Background = ActiveLineBackground,
+            CornerRadius = new CornerRadius(7),
+            Opacity = 0,
+            IsHitTestVisible = false
+        };
+
+        var accent = new Border
+        {
+            Width = 2,
+            Background = LyricsAccentBrush,
+            CornerRadius = new CornerRadius(1),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(1, 4, 0, 4),
+            Opacity = 0,
+            IsHitTestVisible = false
+        };
+
+        var content = new Grid();
+        content.Children.Add(highlight);
+        content.Children.Add(accent);
+        content.Children.Add(text);
 
         var border = new Border
         {
             Background = Brushes.Transparent,
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(6, 3, 6, 3),
-            Margin = new Thickness(0, 1, 0, 1),
+            CornerRadius = new CornerRadius(7),
+            Margin = new Thickness(0, 0, 0, 1),
             Cursor = Cursors.Hand,
             Tag = line.Time,
-            Child = text
+            Child = content
         };
         border.MouseLeftButtonDown += OnLyricLineClick;
 
-        return new LyricsLineVisual(border, text);
+        return new LyricsLineVisual(border, highlight, accent, text);
     }
 
     private void OnLyricLineClick(object sender, MouseButtonEventArgs e)
@@ -228,32 +284,72 @@ public partial class LyricsView : UserControl
 
     private void SetCurrentLine(int index)
     {
-        if (_currentLine >= 0 && _currentLine < _lineVisuals.Count)
-        {
-            var old = _lineVisuals[_currentLine];
-            old.Border.Background = Brushes.Transparent;
-            old.Text.Foreground = InactiveLineBrush;
-            old.Text.FontSize = 11.5;
-            old.Text.FontWeight = FontWeights.Normal;
-        }
-
+        var oldIndex = _currentLine;
         _currentLine = index;
-
-        if (index >= 0 && index < _lineVisuals.Count)
-        {
-            var current = _lineVisuals[index];
-            current.Border.Background = ActiveLineBackground;
-            current.Text.Foreground = ActiveLineBrush;
-            current.Text.FontSize = 13;
-            current.Text.FontWeight = FontWeights.SemiBold;
-        }
+        ApplyLineState(index, oldIndex);
 
         Dispatcher.BeginInvoke(new Action(ScrollToCurrentLine), DispatcherPriority.Background);
+    }
+
+    private void ApplyLineState(int index, int oldIndex)
+    {
+        for (var i = 0; i < _lineVisuals.Count; i++)
+        {
+            var visual = _lineVisuals[i];
+            var active = i == index;
+            var distance = index < 0 ? 0 : Math.Abs(i - index);
+
+            visual.Text.Foreground = active ? ActiveLineBrush : InactiveLineBrush;
+            visual.Text.Opacity = active
+                ? 1.0
+                : index < 0
+                    ? 0.7
+                    : distance switch
+                    {
+                        1 => 0.8,
+                        2 => 0.56,
+                        _ => 0.36
+                    };
+
+            if (active)
+            {
+                AnimateHighlight(visual, 1);
+            }
+            else if (i == oldIndex)
+            {
+                AnimateHighlight(visual, 0);
+            }
+            else
+            {
+                visual.Highlight.BeginAnimation(OpacityProperty, null);
+                visual.Accent.BeginAnimation(OpacityProperty, null);
+                visual.Highlight.Opacity = 0;
+                visual.Accent.Opacity = 0;
+            }
+        }
+    }
+
+    private static void AnimateHighlight(LyricsLineVisual visual, double target)
+    {
+        var ease = new QuadraticEase { EasingMode = EasingMode.EaseOut };
+        var duration = TimeSpan.FromMilliseconds(180);
+
+        visual.Highlight.BeginAnimation(
+            OpacityProperty,
+            new DoubleAnimation(target, duration) { EasingFunction = ease });
+        visual.Accent.BeginAnimation(
+            OpacityProperty,
+            new DoubleAnimation(target, duration) { EasingFunction = ease });
     }
 
     private void ScrollToCurrentLine()
     {
         if (_currentLine < 0 || _currentLine >= _lineVisuals.Count || !LyricsScroll.IsVisible)
+        {
+            return;
+        }
+
+        if (LyricsScroll.ViewportHeight <= 0)
         {
             return;
         }
@@ -267,12 +363,53 @@ public partial class LyricsView : UserControl
 
             var target = y - (LyricsScroll.ViewportHeight - visual.Border.ActualHeight) / 2;
             target = Math.Clamp(target, 0, LyricsScroll.ScrollableHeight);
-            LyricsScroll.ScrollToVerticalOffset(target);
+            AnimateScrollTo(target);
         }
         catch
         {
             // Layout can be transiently invalid while the panel is resizing.
         }
+    }
+
+    private void AnimateScrollTo(double target)
+    {
+        var from = LyricsScroll.VerticalOffset;
+        if (Math.Abs(target - from) < 0.5)
+        {
+            LyricsScroll.ScrollToVerticalOffset(target);
+            return;
+        }
+
+        _scrollFrom = from;
+        _scrollTo = target;
+        _scrollStartTicks = Stopwatch.GetTimestamp();
+        _scrollTimer.Start();
+    }
+
+    private void OnScrollTick(object? sender, EventArgs e)
+    {
+        if (!LyricsScroll.IsVisible)
+        {
+            _scrollTimer.Stop();
+            return;
+        }
+
+        var elapsedMs =
+            (Stopwatch.GetTimestamp() - _scrollStartTicks) * 1000.0 / Stopwatch.Frequency;
+        var progress = Math.Clamp(elapsedMs / ScrollDurationMs, 0, 1);
+        var eased = 1 - Math.Pow(1 - progress, 3);
+
+        LyricsScroll.ScrollToVerticalOffset(_scrollFrom + (_scrollTo - _scrollFrom) * eased);
+
+        if (progress >= 1)
+        {
+            _scrollTimer.Stop();
+        }
+    }
+
+    private void OnLyricsWheel(object sender, MouseWheelEventArgs e)
+    {
+        _scrollTimer.Stop();
     }
 
     private static int FindLineIndex(IReadOnlyList<LyricsLine> lines, TimeSpan position)
@@ -299,16 +436,63 @@ public partial class LyricsView : UserControl
         return result;
     }
 
-    private void ShowMessage(string message)
+    private void SetStatus(string text, Brush dotBrush, string tooltip)
+    {
+        LyricsStatus.Text = text;
+        LyricsStatus.ToolTip = tooltip;
+        StatusDot.Fill = dotBrush;
+        StatusDot.Opacity = 1;
+    }
+
+    private void StartLoadingVisuals()
+    {
+        if (_loadingVisuals)
+        {
+            return;
+        }
+
+        _loadingVisuals = true;
+
+        var pulse = new DoubleAnimation(0.35, 1, TimeSpan.FromMilliseconds(650))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        StatusDot.BeginAnimation(OpacityProperty, pulse);
+
+        var spin = new DoubleAnimation(0, 360, TimeSpan.FromMilliseconds(900))
+        {
+            RepeatBehavior = RepeatBehavior.Forever
+        };
+        RefreshRotate.BeginAnimation(RotateTransform.AngleProperty, spin);
+    }
+
+    private void StopLoadingVisuals()
+    {
+        if (!_loadingVisuals)
+        {
+            return;
+        }
+
+        _loadingVisuals = false;
+        StatusDot.BeginAnimation(OpacityProperty, null);
+        StatusDot.Opacity = 1;
+        RefreshRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+        RefreshRotate.Angle = 0;
+    }
+
+    private void ShowMessage(string message, string glyph = "\uE8D6")
     {
         LyricsMessage.Text = message;
-        LyricsMessage.Visibility = Visibility.Visible;
+        LyricsMessageGlyph.Text = glyph;
+        LyricsMessagePanel.Visibility = Visibility.Visible;
         LyricsScroll.Visibility = Visibility.Collapsed;
     }
 
     private void HideMessage()
     {
-        LyricsMessage.Visibility = Visibility.Collapsed;
+        LyricsMessagePanel.Visibility = Visibility.Collapsed;
         LyricsScroll.Visibility = Visibility.Visible;
     }
 
@@ -324,5 +508,25 @@ public partial class LyricsView : UserControl
         return brush;
     }
 
-    private sealed record LyricsLineVisual(Border Border, TextBlock Text);
+    private static Brush CreateFrozenGradient(Color from, Color to)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(1, 0),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(from, 0),
+                new GradientStop(to, 1)
+            }
+        };
+        brush.Freeze();
+        return brush;
+    }
+
+    private sealed record LyricsLineVisual(
+        Border Border,
+        Border Highlight,
+        Border Accent,
+        TextBlock Text);
 }

@@ -325,10 +325,14 @@
                                       Height="152"
                                       Visibility="Collapsed"
                                       ClipToBounds="True"
-                                      Background="#000000">
+                                      Background="#FF08080A">
                                     <Grid.RenderTransform>
                                         <TranslateTransform x:Name="LyricsTranslate" />
                                     </Grid.RenderTransform>
+                                    <Border Width="1"
+                                            HorizontalAlignment="Left"
+                                            Background="#16FFFFFF"
+                                            IsHitTestVisible="False" />
                                 </Grid>
                             </StackPanel>
 

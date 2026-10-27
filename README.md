@@ -16,8 +16,8 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik (204px) di kanan; media
   (260px) dan progress bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
   tanpa tab terpisah dan tanpa kontrol start/pause ganda.
-  Synced lyrics dari LRCLIB, baris aktif di-highlight, auto-scroll, klik baris untuk seek,
-  fallback plain lyrics, dan cache lokal.
+  Synced lyrics dari LRCLIB dengan baris aktif ber-accent biru, fade atas/bawah, distance dimming,
+  auto-scroll halus, klik baris untuk seek, fallback plain lyrics, dan cache lokal.
 - **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), start/pause/reset, progress, session counter,
   chime, dan saran short/long break setiap 4 sesi. Saat timer jalan, pill menampilkan sisa waktu.
 - **Water reminder** — toast droplet di pill sesuai interval, header counter `3/8`, klik untuk
@@ -37,7 +37,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.5.0-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.5.1-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -91,7 +91,10 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
   bergeser ke kiri; panel lirik (204px) slide masuk dari kanan — morph, tanpa fade. Kontrol
   start/pause tetap di kolom Music.
 - Lirik diambil dari [LRCLIB](https://lrclib.net) berdasarkan judul, artis, album, dan durasi.
-- Synced lyrics: baris aktif di-highlight dan auto-scroll. Klik baris untuk seek.
+- Synced lyrics: baris aktif memakai accent bar biru + pill, baris lain diredupkan berdasarkan
+  jarak, dan auto-scroll bergerak halus (220ms). Klik baris untuk seek.
+- Header menampilkan status `SYNCED` / `PLAIN` / `INSTRUMENTAL`; refresh berputar saat loading.
+- Fade halus di atas/bawah daftar supaya teks tidak terpotong kasar.
 - Kalau tidak ada synced lyrics, ditampilkan plain lyrics. Kalau tidak ada sama sekali, muncul pesan.
 - Tombol refresh untuk mencari ulang; hasil disimpan di cache lokal 30 hari.
 - Lirik hanya di-fetch saat panel lirik dibuka. Kirim hanya metadata track — tidak ada data pribadi.

@@ -13,7 +13,7 @@
         WindowStartupLocation="Manual"
         ShowActivated="False"
         Focusable="False"
-        UseLayoutRounding="True"
+        UseLayoutRounding="False"
         SnapsToDevicePixels="True">
 
     <Grid x:Name="IslandHost"

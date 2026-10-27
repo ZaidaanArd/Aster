@@ -8,6 +8,7 @@
     <SolidColorBrush x:Key="TextTertiary" Color="#5E5E66" />
     <SolidColorBrush x:Key="AccentGreen" Color="#32D74B" />
     <SolidColorBrush x:Key="AccentWater" Color="#7FB8FF" />
+    <SolidColorBrush x:Key="LyricsAccent" Color="#8FA8FF" />
     <SolidColorBrush x:Key="FocusAccent" Color="#FFB86B" />
     <SolidColorBrush x:Key="TrackBrush" Color="#26FFFFFF" />
 

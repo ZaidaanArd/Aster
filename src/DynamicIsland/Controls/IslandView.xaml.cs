@@ -125,7 +125,12 @@ public partial class IslandView : UserControl
         _focusView = new FocusView(focus);
         FocusHost.Children.Add(_focusView);
 
-        _lyricsView = new LyricsView(media, lyrics);
+        _lyricsView = new LyricsView(media, lyrics)
+        {
+            Width = LyricsPaneWidth,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
         LyricsPane.Children.Add(_lyricsView);
 
         _clockTimer = new DispatcherTimer(DispatcherPriority.Normal)

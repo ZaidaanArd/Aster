@@ -9,59 +9,100 @@
              Focusable="False"
              Background="Transparent">
 
-    <Grid Margin="0,6,0,4">
+    <Grid Margin="3,5,2,5">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="22" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,3">
+        <Grid Grid.Row="0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="LYRICS"
                            FontFamily="{StaticResource UiFont}"
-                           FontSize="9.5"
+                           FontSize="9"
                            FontWeight="SemiBold"
                            Foreground="{StaticResource TextSecondary}" />
+                <Ellipse x:Name="StatusDot"
+                         Width="4.5"
+                         Height="4.5"
+                         Fill="{StaticResource LyricsAccent}"
+                         Margin="8,0,5,0"
+                         VerticalAlignment="Center" />
                 <TextBlock x:Name="LyricsStatus"
                            FontFamily="{StaticResource UiFont}"
-                           FontSize="9.5"
+                           FontSize="9"
+                           FontWeight="SemiBold"
                            Foreground="{StaticResource TextTertiary}"
-                           Margin="8,0,0,0"
-                           VerticalAlignment="Center" />
+                           VerticalAlignment="Center"
+                           Text="LRCLIB" />
             </StackPanel>
 
             <Button x:Name="RefreshButton"
                     Style="{StaticResource GlyphButton}"
-                    Width="24"
-                    Height="24"
+                    Width="22"
+                    Height="22"
                     HorizontalAlignment="Right"
                     Click="OnRefreshClick"
                     ToolTip="Refresh lyrics">
-                <TextBlock Text="&#xE72C;"
+                <TextBlock x:Name="RefreshGlyph"
+                           Text="&#xE72C;"
                            FontFamily="{StaticResource GlyphFont}"
-                           FontSize="11" />
+                           FontSize="11"
+                           RenderTransformOrigin="0.5,0.5">
+                    <TextBlock.RenderTransform>
+                        <RotateTransform x:Name="RefreshRotate" />
+                    </TextBlock.RenderTransform>
+                </TextBlock>
             </Button>
+
+            <Border Height="1" VerticalAlignment="Bottom" IsHitTestVisible="False">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#1FFFFFFF" Offset="0" />
+                        <GradientStop Color="#04FFFFFF" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
         </Grid>
 
         <ScrollViewer x:Name="LyricsScroll"
                       Grid.Row="1"
                       VerticalScrollBarVisibility="Hidden"
                       HorizontalScrollBarVisibility="Disabled"
-                      Padding="0,0,4,0"
-                      Focusable="False">
-            <StackPanel x:Name="LyricsStack" />
+                      Padding="0,2,4,2"
+                      Focusable="False"
+                      PreviewMouseWheel="OnLyricsWheel">
+            <ScrollViewer.OpacityMask>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#00FFFFFF" Offset="0" />
+                    <GradientStop Color="#FFFFFFFF" Offset="0.04" />
+                    <GradientStop Color="#FFFFFFFF" Offset="0.96" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </LinearGradientBrush>
+            </ScrollViewer.OpacityMask>
+            <StackPanel x:Name="LyricsStack" Margin="0,6,0,6" />
         </ScrollViewer>
 
-        <TextBlock x:Name="LyricsMessage"
-                   Grid.Row="1"
-                   FontFamily="{StaticResource UiFont}"
-                   FontSize="11.5"
-                   Foreground="{StaticResource TextTertiary}"
-                   TextWrapping="Wrap"
-                   TextAlignment="Center"
-                   MaxWidth="170"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   Visibility="Collapsed" />
+        <StackPanel x:Name="LyricsMessagePanel"
+                    Grid.Row="1"
+                    MaxWidth="166"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="Collapsed">
+            <TextBlock x:Name="LyricsMessageGlyph"
+                       FontFamily="{StaticResource GlyphFont}"
+                       FontSize="22"
+                       Foreground="#33FFFFFF"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,5"
+                       Text="&#xE8D6;" />
+            <TextBlock x:Name="LyricsMessage"
+                       FontFamily="{StaticResource UiFont}"
+                       FontSize="10.5"
+                       Foreground="{StaticResource TextTertiary}"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       LineHeight="15" />
+        </StackPanel>
     </Grid>
 </UserControl>
