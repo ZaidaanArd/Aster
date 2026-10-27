@@ -15,6 +15,7 @@ public enum PanelMode
 {
     Music,
     Camera,
+    Shelf,
     Focus
 }
 
@@ -30,6 +31,7 @@ public partial class IslandView : UserControl
     {
         PanelMode.Music,
         PanelMode.Camera,
+        PanelMode.Shelf,
         PanelMode.Focus
     };
 
@@ -54,6 +56,7 @@ public partial class IslandView : UserControl
     private readonly LyricsView _lyricsView;
     private readonly WaterService _water;
     private readonly CameraView _cameraView;
+    private readonly ShelfView _shelfView;
 
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _hoverTimer;
@@ -95,6 +98,7 @@ public partial class IslandView : UserControl
     private bool _lyricsOpen;
     private bool _lyricsAnimating;
     private int _lyricsAnimationToken;
+    private bool _shelfDragOutActive;
     private int _lastFocusSecond = -1;
     private bool _wasFocusRunning;
 
@@ -139,6 +143,9 @@ public partial class IslandView : UserControl
 
         _cameraView = new CameraView(camera, settings);
         CameraHost.Children.Add(_cameraView);
+
+        _shelfView = new ShelfView();
+        ShelfHost.Children.Add(_shelfView);
 
         _clockTimer = new DispatcherTimer(DispatcherPriority.Normal)
         {
@@ -226,10 +233,13 @@ public partial class IslandView : UserControl
         _focus.Completed += OnFocusCompleted;
         _water.ReminderDue += OnWaterReminderDue;
         _water.StateChanged += OnWaterStateChanged;
+        _shelfView.ItemsChanged += OnShelfItemsChanged;
+        _shelfView.DragOutChanged += OnShelfDragOutChanged;
 
         _wasFocusRunning = _focus.IsRunning;
         UpdateTabVisuals();
         UpdateCameraActivation();
+        UpdateShelfTabDot();
         IsVisibleChanged += OnIslandVisibilityChanged;
 
         _clockTimer.Start();
@@ -262,6 +272,8 @@ public partial class IslandView : UserControl
         _focus.Completed -= OnFocusCompleted;
         _water.ReminderDue -= OnWaterReminderDue;
         _water.StateChanged -= OnWaterStateChanged;
+        _shelfView.ItemsChanged -= OnShelfItemsChanged;
+        _shelfView.DragOutChanged -= OnShelfDragOutChanged;
         IsVisibleChanged -= OnIslandVisibilityChanged;
         _cameraView.SetActive(false);
         _initialized = false;
@@ -303,6 +315,11 @@ public partial class IslandView : UserControl
 
     private void CheckHover()
     {
+        if (_shelfDragOutActive)
+        {
+            return;
+        }
+
         try
         {
             if (PresentationSource.FromVisual(this) is null)
@@ -357,6 +374,11 @@ public partial class IslandView : UserControl
             return;
         }
 
+        if (!expanded && _shelfDragOutActive)
+        {
+            return;
+        }
+
         _expanded = expanded;
 
         _expandedWidth = PanelWidth;
@@ -395,6 +417,120 @@ public partial class IslandView : UserControl
         DebugLog.Write(
             $"camera activation mode={_mode} expanded={_expanded} visible={IsVisible} active={active}");
         _cameraView.SetActive(active);
+    }
+
+    private void OnShelfItemsChanged()
+    {
+        UpdateShelfTabDot();
+    }
+
+    private void UpdateShelfTabDot()
+    {
+        ShelfTabDot.Opacity = _shelfView.Count > 0 ? 1 : 0;
+    }
+
+    private void OnShelfDragOutChanged(bool active)
+    {
+        _shelfDragOutActive = active;
+
+        if (active)
+        {
+            _collapseTimer.Stop();
+            return;
+        }
+
+        _lastActivity = DateTime.Now;
+        CheckHover();
+    }
+
+    private void OnShelfDragEnter(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
+        SetExpanded(true);
+        SetMode(PanelMode.Shelf, animate: false);
+        ShowDropOverlay(true);
+
+        e.Effects = DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    private void OnShelfDragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
+        if (!_expanded)
+        {
+            SetExpanded(true);
+            SetMode(PanelMode.Shelf, animate: false);
+        }
+
+        ShowDropOverlay(true);
+        e.Effects = DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    private void OnShelfDragLeave(object sender, DragEventArgs e)
+    {
+        ShowDropOverlay(false);
+        e.Handled = true;
+    }
+
+    private void OnShelfDrop(object sender, DragEventArgs e)
+    {
+        ShowDropOverlay(false);
+
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
+        SetExpanded(true);
+        SetMode(PanelMode.Shelf, animate: false);
+
+        var paths = e.Data.GetData(DataFormats.FileDrop) as string[];
+        var result = paths is null
+            ? default
+            : _shelfView.AddPaths(paths);
+
+        if (result.Added > 0)
+        {
+            ShowToast(
+                "\uE8B7",
+                result.Added == 1
+                    ? "File added to shelf"
+                    : $"{result.Added} files added to shelf",
+                null,
+                1800);
+        }
+        else if (result.Full)
+        {
+            ShowToast("\uE8B7", "Shelf is full (8)", null, 2200);
+        }
+        else if (result.Rejected > 0)
+        {
+            ShowToast("\uE8B7", "Already on shelf", null, 1800);
+        }
+
+        e.Effects = DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    private void ShowDropOverlay(bool show)
+    {
+        DropOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void StartSpring()
@@ -562,6 +698,7 @@ public partial class IslandView : UserControl
         {
             MusicTab.IsChecked = _mode == PanelMode.Music;
             CameraTab.IsChecked = _mode == PanelMode.Camera;
+            ShelfTab.IsChecked = _mode == PanelMode.Shelf;
             FocusTab.IsChecked = _mode == PanelMode.Focus;
         }
         finally
@@ -578,7 +715,8 @@ public partial class IslandView : UserControl
         {
             PanelMode.Music => 0,
             PanelMode.Camera => 1,
-            PanelMode.Focus => 2,
+            PanelMode.Shelf => 2,
+            PanelMode.Focus => 3,
             _ => 0
         };
     }
@@ -589,6 +727,7 @@ public partial class IslandView : UserControl
         {
             PanelMode.Music => MusicView,
             PanelMode.Camera => CameraHost,
+            PanelMode.Shelf => ShelfHost,
             PanelMode.Focus => FocusHost,
             _ => MusicView
         };
@@ -600,6 +739,7 @@ public partial class IslandView : UserControl
         {
             PanelMode.Music => MusicTranslate,
             PanelMode.Camera => CameraTranslate,
+            PanelMode.Shelf => ShelfTranslate,
             PanelMode.Focus => FocusTranslate,
             _ => MusicTranslate
         };
@@ -657,6 +797,7 @@ public partial class IslandView : UserControl
         _modeAnimating = true;
         MusicTab.IsEnabled = false;
         CameraTab.IsEnabled = false;
+        ShelfTab.IsEnabled = false;
         FocusTab.IsEnabled = false;
 
         var forward = ModeIndex(newMode) > ModeIndex(oldMode);
@@ -727,6 +868,7 @@ public partial class IslandView : UserControl
         _modeAnimating = false;
         MusicTab.IsEnabled = true;
         CameraTab.IsEnabled = true;
+        ShelfTab.IsEnabled = true;
         FocusTab.IsEnabled = true;
 
         foreach (var candidate in AllModes)
@@ -782,6 +924,16 @@ public partial class IslandView : UserControl
         }
 
         SetMode(PanelMode.Camera);
+    }
+
+    private void OnShelfTabChecked(object sender, RoutedEventArgs e)
+    {
+        if (_syncingTabs || !_initialized)
+        {
+            return;
+        }
+
+        SetMode(PanelMode.Shelf);
     }
 
     private void OnFocusTabChecked(object sender, RoutedEventArgs e)

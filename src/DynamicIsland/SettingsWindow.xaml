@@ -316,7 +316,7 @@
                                FontSize="10.5"
                                TextWrapping="Wrap"
                                LineHeight="17"
-                               Text="Dynamic Island for Windows — notch, media, camera, lyrics, focus timer, water reminder, battery, Wi-Fi, volume and brightness.&#10;Built with C# / WPF (.NET 8). Inspired by Nusa." />
+                               Text="Dynamic Island for Windows — notch, media, camera, file shelf, lyrics, focus timer, water reminder, battery, Wi-Fi, volume and brightness.&#10;Built with C# / WPF (.NET 8). Inspired by Nusa." />
                 </StackPanel>
             </ScrollViewer>
 

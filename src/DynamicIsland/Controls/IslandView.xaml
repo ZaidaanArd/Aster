@@ -10,7 +10,12 @@
              Height="40"
              Focusable="False"
              HorizontalAlignment="Center"
-             VerticalAlignment="Top">
+             VerticalAlignment="Top"
+             AllowDrop="True"
+             PreviewDragEnter="OnShelfDragEnter"
+             PreviewDragOver="OnShelfDragOver"
+             PreviewDragLeave="OnShelfDragLeave"
+             PreviewDrop="OnShelfDrop">
 
     <Grid>
         <Border x:Name="ShadowBorder"
@@ -360,10 +365,49 @@
                             </Grid.RenderTransform>
                         </Grid>
 
+                        <Grid x:Name="ShelfHost" Visibility="Collapsed" Opacity="0">
+                            <Grid.RenderTransform>
+                                <TranslateTransform x:Name="ShelfTranslate" />
+                            </Grid.RenderTransform>
+                        </Grid>
+
                         <Grid x:Name="FocusHost" Visibility="Collapsed" Opacity="0">
                             <Grid.RenderTransform>
                                 <TranslateTransform x:Name="FocusTranslate" />
                             </Grid.RenderTransform>
+                        </Grid>
+
+                        <Grid x:Name="DropOverlay"
+                              Visibility="Collapsed"
+                              IsHitTestVisible="False"
+                              Panel.ZIndex="20">
+                            <Border Background="#E6070708" CornerRadius="12" />
+                            <Rectangle Margin="2"
+                                       Stroke="{StaticResource LyricsAccent}"
+                                       StrokeThickness="1.5"
+                                       StrokeDashArray="4 3"
+                                       RadiusX="12"
+                                       RadiusY="12" />
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE8B7;"
+                                           FontFamily="{StaticResource GlyphFont}"
+                                           FontSize="24"
+                                           Foreground="{StaticResource LyricsAccent}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Drop to add to shelf"
+                                           FontFamily="{StaticResource UiFont}"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,4,0,0" />
+                                <TextBlock Text="Files stay until you close the app"
+                                           FontFamily="{StaticResource UiFont}"
+                                           FontSize="9"
+                                           Foreground="{StaticResource TextTertiary}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,2,0,0" />
+                            </StackPanel>
                         </Grid>
                     </Grid>
 
@@ -405,6 +449,26 @@
                                                    FontFamily="{StaticResource GlyphFont}"
                                                    FontSize="13" />
                                     </RadioButton>
+                                </Grid>
+                                <Grid Margin="2,0">
+                                    <RadioButton x:Name="ShelfTab"
+                                                 Style="{StaticResource TabButton}"
+                                                 GroupName="IslandTabs"
+                                                 Checked="OnShelfTabChecked"
+                                                 ToolTip="File shelf">
+                                        <TextBlock Text="&#xE8B7;"
+                                                   FontFamily="{StaticResource GlyphFont}"
+                                                   FontSize="13" />
+                                    </RadioButton>
+                                    <Ellipse x:Name="ShelfTabDot"
+                                             Width="5"
+                                             Height="5"
+                                             Fill="{StaticResource LyricsAccent}"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Top"
+                                             Margin="0,2,3,0"
+                                             Opacity="0"
+                                             IsHitTestVisible="False" />
                                 </Grid>
                                 <Grid Margin="2,0">
                                     <RadioButton x:Name="FocusTab"

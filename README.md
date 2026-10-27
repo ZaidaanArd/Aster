@@ -11,7 +11,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Notch selalu di atas** — hitam, membulat, menempel di tepi atas, tidak muncul di taskbar/Alt+Tab.
 - **Hover untuk membuka** — animasi spring halus, konten muncul ke bawah.
 - **Jam + tanggal** — jam di pill, tanggal & status di panel.
-- **Tab Music / Camera / Focus** — panel media, kamera, dan focus timer; ukuran panel tetap 500×252.
+- **Tab Music / Camera / Shelf / Focus** — panel media, kamera, file shelf, dan focus timer; ukuran panel tetap 500×252.
 - **Transisi panel** — slide + fade halus saat pindah tab, highlight tab ikut bergeser.
 - **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik (204px) di kanan; media
   (260px) dan progress bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
@@ -21,6 +21,8 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Camera** — tab kamera dengan preview live 16:9, mirror toggle, dan shutter. Foto
   full-resolution disimpan ke `Pictures\DynamicIsland\Camera`. Kamera hanya aktif selama
   tab Camera terbuka dan island expanded.
+- **File shelf** — drag file dari Explorer ke island, simpan sementara sebagai referensi path,
+  lalu drag keluar ke Explorer/Discord/email. Maksimal 8 item, session-only.
 - **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), start/pause/reset, progress, session counter,
   chime, dan saran short/long break setiap 4 sesi. Saat timer jalan, pill menampilkan sisa waktu.
 - **Water reminder** — toast droplet di pill sesuai interval, header counter `3/8`, klik untuk
@@ -40,7 +42,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.6.0-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.7.0-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -57,6 +59,11 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 | Klik ikon **Camera** | Panel kamera; kamera mulai otomatis saat panel terbuka |
 | Klik **shutter** di tab Camera | Simpan foto full-resolution ke Pictures |
 | Toggle **Mirror** | Putar preview kamera kiri-kanan |
+| Klik ikon **Shelf** | File yang sedang disimpan sementara |
+| Drag file ke island | Tambah file ke shelf; panel terbuka otomatis |
+| Drag card dari shelf keluar | Copy/attach file ke Explorer atau app lain |
+| Double-click card | Buka file dengan app default |
+| Klik **Clear** di Shelf | Kosongkan shelf |
 | Klik ikon **Focus** | Panel focus timer (dengan animasi geser) |
 | Klik ikon **speech bubble** di Music | Buka/tutup panel lirik; media bergeser ke kiri |
 | Klik baris lirik | Seek ke timestamp baris tersebut |
@@ -88,6 +95,18 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 - Tidak memakai mikrofon, tidak merekam video, dan tidak upload apa pun.
 - Kalau akses kamera diblokir atau kamera sedang dipakai app lain, muncul tombol
   **Retry** / **Camera settings**.
+
+### File shelf
+
+- Drag file dari Explorer ke pill/island. Panel terbuka, tab **Shelf** aktif, dan file
+  masuk sebagai card.
+- Shelf menyimpan **referensi path**, bukan copy, jadi ringan. Maksimal **8 item**.
+- Drag card keluar ke Explorer, Discord, email, atau app lain untuk copy/attach.
+- Double-click card untuk membuka file dengan app default.
+- Tombol **×** menghapus satu item; **Clear** mengosongkan semua.
+- File yang dipindah/dihapus ditandai **Missing** dan tidak bisa di-drag.
+- Shelf bersifat **session-only** — kosong saat app ditutup.
+- Ada `ShelfTabDot` biru di tab Shelf kalau shelf berisi file.
 
 ### Water reminder
 
@@ -160,6 +179,7 @@ src/DynamicIsland/
 ├─ Controls/IslandView.*      notch, animasi, jam, mascot, media UI, toast, tab bar
 ├─ Controls/FocusView.*       UI focus timer (chips, countdown, progress, kontrol)
 ├─ Controls/CameraView.*      tab kamera (preview, mirror, shutter, status)
+├─ Controls/ShelfView.*       file shelf (cards, drag-out, empty state, clear)
 ├─ Controls/LyricsView.*      pane lirik (header, status, refresh, highlight, auto-scroll)
 ├─ SettingsWindow.*           settings window dark (general, appearance, lyrics, focus, water, data)
 ├─ Services/
@@ -197,11 +217,13 @@ src/DynamicIsland/
   Camera terbuka dan island expanded.
 - **Snapshot** disimpan ke folder Pictures pengguna; kalau OneDrive mengalihkan Pictures, file
   ikut masuk ke folder OneDrive tersebut.
+- **File shelf** menyimpan referensi path, bukan salinan. Kalau file aslinya dipindah/dihapus,
+  card berubah jadi Missing. Shelf kosong saat app ditutup.
 - **Installer belum ditandatangani**, sehingga SmartScreen memberi peringatan.
 
 ## Roadmap
 
-Fitur Nusa yang belum ada di versi ini: to-do dengan reminder dan file shelf drag & drop.
+Fitur Nusa yang belum ada di versi ini: to-do dengan reminder.
 
 ## Lisensi
 
