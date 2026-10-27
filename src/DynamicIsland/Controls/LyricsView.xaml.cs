@@ -18,17 +18,17 @@ public partial class LyricsView : UserControl
     private static readonly Brush PlainLineBrush = CreateFrozenBrush(Color.FromRgb(0xA8, 0xA8, 0xB0));
     private static readonly Brush LyricsAccentBrush = CreateFrozenBrush(Color.FromRgb(0x8F, 0xA8, 0xFF));
     private static readonly Brush MutedDotBrush = CreateFrozenBrush(Color.FromRgb(0x5E, 0x5E, 0x66));
-    private static readonly Brush ActiveLineBackground = CreateFrozenGradient(
-        Color.FromArgb(0x38, 0x7C, 0x9C, 0xFF),
-        Color.FromArgb(0x08, 0x7C, 0x9C, 0xFF));
     private static readonly FontFamily UiFont = new("Segoe UI Variable Display, Segoe UI");
 
     private readonly MediaService _media;
     private readonly LyricsService _lyrics;
+    private readonly SettingsService _settings;
     private readonly DispatcherTimer _timer;
     private readonly DispatcherTimer _scrollTimer;
     private readonly List<LyricsLineVisual> _lineVisuals = new();
 
+    private Brush _highlightBrush;
+    private string _highlightKey;
     private int _currentLine = -1;
     private bool _initialized;
     private bool _rendering;
@@ -37,10 +37,14 @@ public partial class LyricsView : UserControl
     private double _scrollTo;
     private long _scrollStartTicks;
 
-    public LyricsView(MediaService media, LyricsService lyrics)
+    public LyricsView(MediaService media, LyricsService lyrics, SettingsService settings)
     {
         _media = media;
         _lyrics = lyrics;
+        _settings = settings;
+
+        _highlightKey = settings.Current.LyricsHighlightColor;
+        _highlightBrush = CreateHighlightBrush(ResolveHighlightColor(_highlightKey));
 
         InitializeComponent();
 
@@ -69,6 +73,7 @@ public partial class LyricsView : UserControl
 
         _initialized = true;
         _lyrics.Changed += OnLyricsChanged;
+        _settings.Changed += OnSettingsChanged;
         RenderLyrics();
         _timer.Start();
     }
@@ -79,6 +84,7 @@ public partial class LyricsView : UserControl
         _scrollTimer.Stop();
         StopLoadingVisuals();
         _lyrics.Changed -= OnLyricsChanged;
+        _settings.Changed -= OnSettingsChanged;
         _initialized = false;
     }
 
@@ -92,6 +98,56 @@ public partial class LyricsView : UserControl
         {
             Dispatcher.BeginInvoke(new Action(RenderLyrics));
         }
+    }
+
+    private void OnSettingsChanged()
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(new Action(OnSettingsChanged));
+            return;
+        }
+
+        if (!_initialized)
+        {
+            return;
+        }
+
+        var key = _settings.Current.LyricsHighlightColor;
+        if (string.Equals(key, _highlightKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _highlightKey = key;
+        _highlightBrush = CreateHighlightBrush(ResolveHighlightColor(key));
+
+        foreach (var visual in _lineVisuals)
+        {
+            visual.Highlight.Background = _highlightBrush;
+        }
+    }
+
+    private static Color ResolveHighlightColor(string? text) =>
+        ColorHex.TryParse(text, out var color)
+            ? color
+            : Color.FromRgb(0x7C, 0x9C, 0xFF);
+
+    private static Brush CreateHighlightBrush(Color color)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Color.FromArgb(0x34, color.R, color.G, color.B), 0),
+                new GradientStop(Color.FromArgb(0x18, color.R, color.G, color.B), 1)
+            }
+        };
+
+        brush.Freeze();
+        return brush;
     }
 
     private void RenderLyrics()
@@ -212,33 +268,20 @@ public partial class LyricsView : UserControl
             Foreground = InactiveLineBrush,
             LineHeight = 18,
             LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
-            Margin = new Thickness(7, 2, 5, 2),
+            Margin = new Thickness(8, 2, 8, 2),
             Opacity = 0.7
         };
 
         var highlight = new Border
         {
-            Background = ActiveLineBackground,
+            Background = _highlightBrush,
             CornerRadius = new CornerRadius(7),
-            Opacity = 0,
-            IsHitTestVisible = false
-        };
-
-        var accent = new Border
-        {
-            Width = 2,
-            Background = LyricsAccentBrush,
-            CornerRadius = new CornerRadius(1),
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            Margin = new Thickness(1, 4, 0, 4),
             Opacity = 0,
             IsHitTestVisible = false
         };
 
         var content = new Grid();
         content.Children.Add(highlight);
-        content.Children.Add(accent);
         content.Children.Add(text);
 
         var border = new Border
@@ -252,7 +295,7 @@ public partial class LyricsView : UserControl
         };
         border.MouseLeftButtonDown += OnLyricLineClick;
 
-        return new LyricsLineVisual(border, highlight, accent, text);
+        return new LyricsLineVisual(border, highlight, text);
     }
 
     private void OnLyricLineClick(object sender, MouseButtonEventArgs e)
@@ -322,9 +365,7 @@ public partial class LyricsView : UserControl
             else
             {
                 visual.Highlight.BeginAnimation(OpacityProperty, null);
-                visual.Accent.BeginAnimation(OpacityProperty, null);
                 visual.Highlight.Opacity = 0;
-                visual.Accent.Opacity = 0;
             }
         }
     }
@@ -335,9 +376,6 @@ public partial class LyricsView : UserControl
         var duration = TimeSpan.FromMilliseconds(180);
 
         visual.Highlight.BeginAnimation(
-            OpacityProperty,
-            new DoubleAnimation(target, duration) { EasingFunction = ease });
-        visual.Accent.BeginAnimation(
             OpacityProperty,
             new DoubleAnimation(target, duration) { EasingFunction = ease });
     }
@@ -508,25 +546,8 @@ public partial class LyricsView : UserControl
         return brush;
     }
 
-    private static Brush CreateFrozenGradient(Color from, Color to)
-    {
-        var brush = new LinearGradientBrush
-        {
-            StartPoint = new Point(0, 0),
-            EndPoint = new Point(1, 0),
-            GradientStops = new GradientStopCollection
-            {
-                new GradientStop(from, 0),
-                new GradientStop(to, 1)
-            }
-        };
-        brush.Freeze();
-        return brush;
-    }
-
     private sealed record LyricsLineVisual(
         Border Border,
         Border Highlight,
-        Border Accent,
         TextBlock Text);
 }

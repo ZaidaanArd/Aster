@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using DynamicIsland.Services;
 
 namespace DynamicIsland;
@@ -34,7 +36,7 @@ public partial class SettingsWindow : Window
         Closed += OnSettingsWindowClosed;
 
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
-        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.7.0"}";
+        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.7.1"}";
         DataPathText.Text = _settings.FilePath;
     }
 
@@ -80,6 +82,14 @@ public partial class SettingsWindow : Window
         TxtWaterStart.Text = Math.Clamp(settings.WaterActiveStartHour, 0, 23).ToString();
         TxtWaterEnd.Text = Math.Clamp(settings.WaterActiveEndHour, 0, 23).ToString();
         TxtWaterGoal.Text = Math.Clamp(settings.WaterDailyGoal, 1, 20).ToString();
+
+        var lyricColor = ColorHex.TryParse(settings.LyricsHighlightColor, out var parsedColor)
+            ? parsedColor
+            : Color.FromRgb(0x7C, 0x9C, 0xFF);
+        var lyricHex = ColorHex.Format(lyricColor);
+        TxtLyricsColor.Text = lyricHex;
+        UpdateLyricsColorPreview(lyricColor);
+        UpdateLyricsColorSwatches(lyricHex);
 
         _loading = false;
         UpdateWaterStatus();
@@ -133,6 +143,74 @@ public partial class SettingsWindow : Window
             _settings.Current.WaterReminderEnabled = ChkWater.IsChecked == true;
             _settings.Save();
             UpdateWaterStatus();
+        }
+    }
+
+    private void OnLyricsColorSwatchClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string hex })
+        {
+            ApplyLyricsColor(hex);
+        }
+    }
+
+    private void OnLyricsColorLostFocus(object sender, RoutedEventArgs e)
+    {
+        ApplyLyricsColor(TxtLyricsColor.Text);
+    }
+
+    private void OnLyricsColorKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            ApplyLyricsColor(TxtLyricsColor.Text);
+            Keyboard.ClearFocus();
+        }
+    }
+
+    private void ApplyLyricsColor(string text)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        if (!ColorHex.TryParse(text, out var color))
+        {
+            var fallback = ColorHex.TryParse(_settings.Current.LyricsHighlightColor, out var current)
+                ? current
+                : Color.FromRgb(0x7C, 0x9C, 0xFF);
+            var fallbackHex = ColorHex.Format(fallback);
+            TxtLyricsColor.Text = fallbackHex;
+            UpdateLyricsColorPreview(fallback);
+            UpdateLyricsColorSwatches(fallbackHex);
+            return;
+        }
+
+        var hex = ColorHex.Format(color);
+        _settings.Current.LyricsHighlightColor = hex;
+        _settings.Save();
+
+        TxtLyricsColor.Text = hex;
+        UpdateLyricsColorPreview(color);
+        UpdateLyricsColorSwatches(hex);
+    }
+
+    private void UpdateLyricsColorPreview(Color color)
+    {
+        LyricsColorPreview.Background = new SolidColorBrush(color);
+    }
+
+    private void UpdateLyricsColorSwatches(string hex)
+    {
+        var idleBrush = new SolidColorBrush(Color.FromArgb(0x24, 0xFF, 0xFF, 0xFF));
+
+        foreach (var button in LyricsColorSwatches.Children.OfType<Button>())
+        {
+            var selected = button.Tag is string tag &&
+                string.Equals(tag, hex, StringComparison.OrdinalIgnoreCase);
+            button.BorderBrush = selected ? Brushes.White : idleBrush;
+            button.BorderThickness = new Thickness(selected ? 1.5 : 1);
         }
     }
 

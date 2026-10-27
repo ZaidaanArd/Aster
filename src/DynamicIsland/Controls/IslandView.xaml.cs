@@ -133,7 +133,7 @@ public partial class IslandView : UserControl
         _focusView = new FocusView(focus);
         FocusHost.Children.Add(_focusView);
 
-        _lyricsView = new LyricsView(media, lyrics)
+        _lyricsView = new LyricsView(media, lyrics, settings)
         {
             Width = LyricsPaneWidth,
             HorizontalAlignment = HorizontalAlignment.Left,

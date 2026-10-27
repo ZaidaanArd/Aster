@@ -16,7 +16,8 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik (204px) di kanan; media
   (260px) dan progress bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
   tanpa tab terpisah dan tanpa kontrol start/pause ganda.
-  Synced lyrics dari LRCLIB dengan baris aktif ber-accent biru, fade atas/bawah, distance dimming,
+  Synced lyrics dari LRCLIB dengan baris aktif berupa pill warna yang bisa dikustom (default biru),
+  fade atas/bawah, distance dimming,
   auto-scroll halus, klik baris untuk seek, fallback plain lyrics, dan cache lokal.
 - **Camera** — tab kamera dengan preview live 16:9, mirror toggle, dan shutter. Foto
   full-resolution disimpan ke `Pictures\DynamicIsland\Camera`. Kamera hanya aktif selama
@@ -42,7 +43,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.7.0-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.7.1-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -129,8 +130,9 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
   bergeser ke kiri; panel lirik (204px) slide masuk dari kanan — morph, tanpa fade. Kontrol
   start/pause tetap di kolom Music.
 - Lirik diambil dari [LRCLIB](https://lrclib.net) berdasarkan judul, artis, album, dan durasi.
-- Synced lyrics: baris aktif memakai accent bar biru + pill, baris lain diredupkan berdasarkan
-  jarak, dan auto-scroll bergerak halus (220ms). Klik baris untuk seek.
+- Synced lyrics: baris aktif memakai pill warna (default biru) tanpa garis kiri; warnanya bisa
+  diubah di **Settings → Lyrics → Highlight color** (swatch atau hex `#RRGGBB`). Baris lain
+  diredupkan berdasarkan jarak, dan auto-scroll bergerak halus (220ms). Klik baris untuk seek.
 - Header menampilkan status `SYNCED` / `PLAIN` / `INSTRUMENTAL`; refresh berputar saat loading.
 - Fade halus di atas/bawah daftar supaya teks tidak terpotong kasar.
 - Kalau tidak ada synced lyrics, ditampilkan plain lyrics. Kalau tidak ada sama sekali, muncul pesan.

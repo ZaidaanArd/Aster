@@ -12,6 +12,7 @@ public sealed class AppSettings
     public bool VolumeToast { get; set; } = true;
     public bool BrightnessToast { get; set; } = true;
     public bool LyricsEnabled { get; set; } = true;
+    public string LyricsHighlightColor { get; set; } = ColorHex.DefaultLyricsHighlight;
     public bool WaterReminderEnabled { get; set; }
     public int WaterIntervalMinutes { get; set; } = 60;
     public int WaterActiveStartHour { get; set; } = 8;

@@ -117,6 +117,69 @@
                                FontSize="10"
                                TextWrapping="Wrap" />
 
+                    <Grid Margin="0,10,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource SettingsLabel}" Text="Highlight color" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Border x:Name="LyricsColorPreview"
+                                    Width="24"
+                                    Height="24"
+                                    CornerRadius="7"
+                                    Background="#7C9CFF"
+                                    BorderBrush="#33FFFFFF"
+                                    BorderThickness="1"
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center" />
+                            <TextBox x:Name="TxtLyricsColor"
+                                     Style="{StaticResource DarkTextBox}"
+                                     Width="90"
+                                     TextAlignment="Center"
+                                     MaxLength="7"
+                                     LostFocus="OnLyricsColorLostFocus"
+                                     KeyDown="OnLyricsColorKeyDown" />
+                        </StackPanel>
+                    </Grid>
+
+                    <WrapPanel x:Name="LyricsColorSwatches" Margin="0,0,0,4">
+                        <Button Style="{StaticResource ColorSwatch}"
+                                Background="#7C9CFF"
+                                Tag="#7C9CFF"
+                                ToolTip="Blue"
+                                Click="OnLyricsColorSwatchClick" />
+                        <Button Style="{StaticResource ColorSwatch}"
+                                Background="#32D74B"
+                                Tag="#32D74B"
+                                ToolTip="Green"
+                                Click="OnLyricsColorSwatchClick" />
+                        <Button Style="{StaticResource ColorSwatch}"
+                                Background="#FFB86B"
+                                Tag="#FFB86B"
+                                ToolTip="Amber"
+                                Click="OnLyricsColorSwatchClick" />
+                        <Button Style="{StaticResource ColorSwatch}"
+                                Background="#FF6B9D"
+                                Tag="#FF6B9D"
+                                ToolTip="Pink"
+                                Click="OnLyricsColorSwatchClick" />
+                        <Button Style="{StaticResource ColorSwatch}"
+                                Background="#C08CFF"
+                                Tag="#C08CFF"
+                                ToolTip="Purple"
+                                Click="OnLyricsColorSwatchClick" />
+                        <Button Style="{StaticResource ColorSwatch}"
+                                Background="#F5F5F7"
+                                Tag="#F5F5F7"
+                                ToolTip="White"
+                                Click="OnLyricsColorSwatchClick" />
+                    </WrapPanel>
+                    <TextBlock Text="Hex #RRGGBB · default #7C9CFF"
+                               Style="{StaticResource SubtitleText}"
+                               FontSize="9.5"
+                               TextWrapping="Wrap" />
+
                     <TextBlock Text="FOCUS" Style="{StaticResource SectionHeader}" />
 
                     <Grid Margin="0,0,0,9">
