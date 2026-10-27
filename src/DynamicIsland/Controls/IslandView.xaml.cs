@@ -14,6 +14,7 @@ namespace DynamicIsland.Controls;
 public enum PanelMode
 {
     Music,
+    Camera,
     Focus
 }
 
@@ -28,6 +29,7 @@ public partial class IslandView : UserControl
     private static readonly PanelMode[] AllModes =
     {
         PanelMode.Music,
+        PanelMode.Camera,
         PanelMode.Focus
     };
 
@@ -51,6 +53,7 @@ public partial class IslandView : UserControl
     private readonly LyricsService _lyrics;
     private readonly LyricsView _lyricsView;
     private readonly WaterService _water;
+    private readonly CameraView _cameraView;
 
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _hoverTimer;
@@ -108,7 +111,8 @@ public partial class IslandView : UserControl
         NetworkService network,
         FocusService focus,
         LyricsService lyrics,
-        WaterService water)
+        WaterService water,
+        CameraService camera)
     {
         _settings = settings;
         _media = media;
@@ -132,6 +136,9 @@ public partial class IslandView : UserControl
             VerticalAlignment = VerticalAlignment.Top
         };
         LyricsPane.Children.Add(_lyricsView);
+
+        _cameraView = new CameraView(camera, settings);
+        CameraHost.Children.Add(_cameraView);
 
         _clockTimer = new DispatcherTimer(DispatcherPriority.Normal)
         {
@@ -222,6 +229,8 @@ public partial class IslandView : UserControl
 
         _wasFocusRunning = _focus.IsRunning;
         UpdateTabVisuals();
+        UpdateCameraActivation();
+        IsVisibleChanged += OnIslandVisibilityChanged;
 
         _clockTimer.Start();
         _hoverTimer.Start();
@@ -253,6 +262,8 @@ public partial class IslandView : UserControl
         _focus.Completed -= OnFocusCompleted;
         _water.ReminderDue -= OnWaterReminderDue;
         _water.StateChanged -= OnWaterStateChanged;
+        IsVisibleChanged -= OnIslandVisibilityChanged;
+        _cameraView.SetActive(false);
         _initialized = false;
     }
 
@@ -369,7 +380,21 @@ public partial class IslandView : UserControl
             UpdateTabVisuals();
         }
 
+        UpdateCameraActivation();
         StartSpring();
+    }
+
+    private void OnIslandVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        UpdateCameraActivation();
+    }
+
+    private void UpdateCameraActivation()
+    {
+        var active = _mode == PanelMode.Camera && _expanded && IsVisible;
+        DebugLog.Write(
+            $"camera activation mode={_mode} expanded={_expanded} visible={IsVisible} active={active}");
+        _cameraView.SetActive(active);
     }
 
     private void StartSpring()
@@ -536,6 +561,7 @@ public partial class IslandView : UserControl
         try
         {
             MusicTab.IsChecked = _mode == PanelMode.Music;
+            CameraTab.IsChecked = _mode == PanelMode.Camera;
             FocusTab.IsChecked = _mode == PanelMode.Focus;
         }
         finally
@@ -548,17 +574,35 @@ public partial class IslandView : UserControl
 
     private static int ModeIndex(PanelMode mode)
     {
-        return mode == PanelMode.Focus ? 1 : 0;
+        return mode switch
+        {
+            PanelMode.Music => 0,
+            PanelMode.Camera => 1,
+            PanelMode.Focus => 2,
+            _ => 0
+        };
     }
 
     private FrameworkElement GetView(PanelMode mode)
     {
-        return mode == PanelMode.Focus ? FocusHost : MusicView;
+        return mode switch
+        {
+            PanelMode.Music => MusicView,
+            PanelMode.Camera => CameraHost,
+            PanelMode.Focus => FocusHost,
+            _ => MusicView
+        };
     }
 
     private TranslateTransform GetTranslate(PanelMode mode)
     {
-        return mode == PanelMode.Focus ? FocusTranslate : MusicTranslate;
+        return mode switch
+        {
+            PanelMode.Music => MusicTranslate,
+            PanelMode.Camera => CameraTranslate,
+            PanelMode.Focus => FocusTranslate,
+            _ => MusicTranslate
+        };
     }
 
     private void SetMode(PanelMode mode, bool animate = true)
@@ -577,6 +621,7 @@ public partial class IslandView : UserControl
 
         _mode = mode;
         UpdateTabVisuals();
+        UpdateCameraActivation();
 
         var canAnimate = animate && _expanded && IsVisible;
         if (!canAnimate)
@@ -611,6 +656,7 @@ public partial class IslandView : UserControl
 
         _modeAnimating = true;
         MusicTab.IsEnabled = false;
+        CameraTab.IsEnabled = false;
         FocusTab.IsEnabled = false;
 
         var forward = ModeIndex(newMode) > ModeIndex(oldMode);
@@ -680,6 +726,7 @@ public partial class IslandView : UserControl
     {
         _modeAnimating = false;
         MusicTab.IsEnabled = true;
+        CameraTab.IsEnabled = true;
         FocusTab.IsEnabled = true;
 
         foreach (var candidate in AllModes)
@@ -725,6 +772,16 @@ public partial class IslandView : UserControl
         }
 
         SetMode(PanelMode.Music);
+    }
+
+    private void OnCameraTabChecked(object sender, RoutedEventArgs e)
+    {
+        if (_syncingTabs || !_initialized)
+        {
+            return;
+        }
+
+        SetMode(PanelMode.Camera);
     }
 
     private void OnFocusTabChecked(object sender, RoutedEventArgs e)

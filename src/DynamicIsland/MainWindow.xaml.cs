@@ -30,7 +30,8 @@ public partial class MainWindow : Window
         FullscreenWatcher fullscreen,
         FocusService focus,
         LyricsService lyrics,
-        WaterService water)
+        WaterService water,
+        CameraService camera)
     {
         _settings = settings;
         _fullscreen = fullscreen;
@@ -43,7 +44,7 @@ public partial class MainWindow : Window
         _water.IsSuppressed = true;
         IsVisibleChanged += OnIslandVisibilityChanged;
 
-        _island = new IslandView(settings, media, audio, brightness, battery, network, focus, lyrics, water);
+        _island = new IslandView(settings, media, audio, brightness, battery, network, focus, lyrics, water, camera);
         _island.SettingsRequested += ShowSettings;
         IslandHost.Children.Add(_island);
 

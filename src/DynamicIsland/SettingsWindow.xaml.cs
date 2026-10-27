@@ -34,7 +34,7 @@ public partial class SettingsWindow : Window
         Closed += OnSettingsWindowClosed;
 
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
-        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.5.1"}";
+        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.6.0"}";
         DataPathText.Text = _settings.FilePath;
     }
 
