@@ -21,6 +21,8 @@ public sealed class AppSettings
     public int WaterGlassesToday { get; set; }
     public string WaterDate { get; set; } = string.Empty;
     public bool CameraMirror { get; set; } = true;
+    public bool GlassBackground { get; set; } = true;
+    public bool BouncySpring { get; set; } = true;
     public int FocusMinutes { get; set; } = 25;
     public int ShortBreakMinutes { get; set; } = 5;
     public int LongBreakMinutes { get; set; } = 15;

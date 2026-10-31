@@ -36,7 +36,7 @@ public partial class SettingsWindow : Window
         Closed += OnSettingsWindowClosed;
 
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
-        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.7.1"}";
+        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.8.0"}";
         DataPathText.Text = _settings.FilePath;
     }
 
@@ -71,6 +71,8 @@ public partial class SettingsWindow : Window
         ChkMinimal.IsChecked = settings.MinimalNotch;
         ChkVolume.IsChecked = settings.VolumeToast;
         ChkBrightness.IsChecked = settings.BrightnessToast;
+        ChkGlass.IsChecked = settings.GlassBackground;
+        ChkBouncy.IsChecked = settings.BouncySpring;
         ChkLyrics.IsChecked = settings.LyricsEnabled;
         ChkChime.IsChecked = settings.FocusChime;
         ChkWater.IsChecked = settings.WaterReminderEnabled;
@@ -127,6 +129,14 @@ public partial class SettingsWindow : Window
         {
             _settings.Current.BrightnessToast = ChkBrightness.IsChecked == true;
             _settings.Save();
+        }
+        else if (ReferenceEquals(sender, ChkGlass))
+        {
+            _mainWindow.SetGlassBackground(ChkGlass.IsChecked == true);
+        }
+        else if (ReferenceEquals(sender, ChkBouncy))
+        {
+            _mainWindow.SetBouncySpring(ChkBouncy.IsChecked == true);
         }
         else if (ReferenceEquals(sender, ChkLyrics))
         {

@@ -18,11 +18,10 @@ public partial class LyricsView : UserControl
     private static readonly Brush PlainLineBrush = CreateFrozenBrush(Color.FromRgb(0xA8, 0xA8, 0xB0));
     private static readonly Brush LyricsAccentBrush = CreateFrozenBrush(Color.FromRgb(0x8F, 0xA8, 0xFF));
     private static readonly Brush MutedDotBrush = CreateFrozenBrush(Color.FromRgb(0x5E, 0x5E, 0x66));
-    private static readonly FontFamily UiFont = new("Segoe UI Variable Display, Segoe UI");
-
     private readonly MediaService _media;
     private readonly LyricsService _lyrics;
     private readonly SettingsService _settings;
+    private readonly FontFamily _uiFont;
     private readonly DispatcherTimer _timer;
     private readonly DispatcherTimer _scrollTimer;
     private readonly List<LyricsLineVisual> _lineVisuals = new();
@@ -47,6 +46,7 @@ public partial class LyricsView : UserControl
         _highlightBrush = CreateHighlightBrush(ResolveHighlightColor(_highlightKey));
 
         InitializeComponent();
+        _uiFont = (FontFamily)FindResource("UiFont");
 
         _timer = new DispatcherTimer(DispatcherPriority.Background)
         {
@@ -237,7 +237,7 @@ public partial class LyricsView : UserControl
                 {
                     Text = document.PlainLyrics.Trim(),
                     TextWrapping = TextWrapping.Wrap,
-                    FontFamily = UiFont,
+                    FontFamily = _uiFont,
                     FontSize = 11.5,
                     Foreground = PlainLineBrush,
                     LineHeight = 18,
@@ -263,7 +263,7 @@ public partial class LyricsView : UserControl
         {
             Text = line.Text,
             TextWrapping = TextWrapping.Wrap,
-            FontFamily = UiFont,
+            FontFamily = _uiFont,
             FontSize = 11.5,
             Foreground = InactiveLineBrush,
             LineHeight = 18,

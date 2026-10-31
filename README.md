@@ -13,6 +13,9 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Jam + tanggal** — jam di pill, tanggal & status di panel.
 - **Tab Music / Camera / Shelf / Focus** — panel media, kamera, file shelf, dan focus timer; ukuran panel tetap 500×252.
 - **Transisi panel** — slide + fade halus saat pindah tab, highlight tab ikut bergeser.
+- **Inter + glass** — UI memakai font Inter; panel memakai frosted glass dengan rim light, noise halus,
+  dan soft shadow. Bisa dimatikan di **Settings → Appearance**.
+- **Bouncy open/close** — spring hover sedikit overshoot sebelum settle; bisa dimatikan di Appearance.
 - **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik (204px) di kanan; media
   (260px) dan progress bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
   tanpa tab terpisah dan tanpa kontrol start/pause ganda.
@@ -43,7 +46,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.7.1-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.8.0-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -74,6 +77,14 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 | Klik progress bar | Seek ke posisi tersebut |
 | Klik ikon tray | Buka menu pengaturan |
 | Klik dua kali ikon tray | Sembunyikan/tampilkan island |
+
+### Appearance
+
+- **Glass background** — panel frosted transparan dengan gradient, rim light, noise, dan shadow.
+  Matikan untuk kembali ke hitam solid.
+- **Bouncy open/close** — border island sedikit overshoot saat membuka/menutup. Konten tetap diam;
+  lirik tetap smooth.
+- Font UI memakai **Inter** (Regular + SemiBold). Ikon tetap Segoe Fluent Icons.
 
 ### Focus timer
 
@@ -221,6 +232,10 @@ src/DynamicIsland/
   ikut masuk ke folder OneDrive tersebut.
 - **File shelf** menyimpan referensi path, bukan salinan. Kalau file aslinya dipindah/dihapus,
   card berubah jadi Missing. Shelf kosong saat app ditutup.
+- **Glass** memakai frosted effect (transparan + gradient + noise), bukan backdrop blur real.
+  Acrylic Windows sempat dicoba, tetapi memblur seluruh window 760×460 dan merusak bentuk island,
+  jadi tidak dipakai.
+- **Bouncy** adalah spring overshoot halus; kalau terasa terlalu banyak, matikan di Appearance.
 - **Installer belum ditandatangani**, sehingga SmartScreen memberi peringatan.
 
 ## Roadmap
@@ -230,3 +245,7 @@ Fitur Nusa yang belum ada di versi ini: to-do dengan reminder.
 ## Lisensi
 
 MIT — lihat [LICENSE](LICENSE).
+
+UI memakai [Inter](https://rsms.me/inter/) oleh The Inter Project Authors, dengan lisensi
+SIL Open Font License 1.1. Teks lisensi ada di `src/DynamicIsland/Assets/Fonts/OFL.txt`
+dan disertakan di ZIP rilis.

@@ -104,6 +104,27 @@
                               Margin="0,0,0,10"
                               Checked="OnToggleChanged"
                               Unchecked="OnToggleChanged" />
+                    <CheckBox x:Name="ChkGlass"
+                              Style="{StaticResource ToggleSwitch}"
+                              Content="Glass background"
+                              Margin="0,0,0,10"
+                              Checked="OnToggleChanged"
+                              Unchecked="OnToggleChanged" />
+                    <TextBlock Text="Panel transparan frosted. Matikan untuk hitam solid."
+                               Style="{StaticResource SubtitleText}"
+                               FontSize="10"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10" />
+                    <CheckBox x:Name="ChkBouncy"
+                              Style="{StaticResource ToggleSwitch}"
+                              Content="Bouncy open/close"
+                              Margin="0,0,0,10"
+                              Checked="OnToggleChanged"
+                              Unchecked="OnToggleChanged" />
+                    <TextBlock Text="Spring sedikit overshoot saat panel membuka atau menutup."
+                               Style="{StaticResource SubtitleText}"
+                               FontSize="10"
+                               TextWrapping="Wrap" />
 
                     <TextBlock Text="LYRICS" Style="{StaticResource SectionHeader}" />
                     <CheckBox x:Name="ChkLyrics"

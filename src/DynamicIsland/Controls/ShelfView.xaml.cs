@@ -17,12 +17,12 @@ public partial class ShelfView : UserControl
     private const double CardWidth = 106;
     private const double CardHeight = 65;
 
-    private static readonly FontFamily UiFont = new("Segoe UI Variable Display, Segoe UI");
     private static readonly Brush MissingBrush = CreateFrozenBrush(Color.FromRgb(0xFF, 0x6B, 0x63));
     private static readonly Brush MutedBrush = CreateFrozenBrush(Color.FromRgb(0x5E, 0x5E, 0x66));
 
     private readonly List<ShelfItem> _items = new();
     private readonly DispatcherTimer _existenceTimer;
+    private readonly FontFamily _uiFont;
 
     private Point _dragStart;
     private ShelfItem? _dragItem;
@@ -36,6 +36,7 @@ public partial class ShelfView : UserControl
     public ShelfView()
     {
         InitializeComponent();
+        _uiFont = (FontFamily)FindResource("UiFont");
 
         _existenceTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
@@ -181,7 +182,7 @@ public partial class ShelfView : UserControl
             Child = new TextBlock
             {
                 Text = item.BadgeText,
-                FontFamily = UiFont,
+                FontFamily = _uiFont,
                 FontSize = 8.5,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = badgeForeground,
@@ -193,7 +194,7 @@ public partial class ShelfView : UserControl
         var name = new TextBlock
         {
             Text = item.Name,
-            FontFamily = UiFont,
+            FontFamily = _uiFont,
             FontSize = 9.5,
             FontWeight = FontWeights.SemiBold,
             Foreground = (Brush)FindResource("TextPrimary"),
@@ -208,7 +209,7 @@ public partial class ShelfView : UserControl
         var size = new TextBlock
         {
             Text = GetSizeLabel(item),
-            FontFamily = UiFont,
+            FontFamily = _uiFont,
             FontSize = 8,
             Foreground = item.Exists ? MutedBrush : MissingBrush,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -242,7 +243,7 @@ public partial class ShelfView : UserControl
             Content = new TextBlock
             {
                 Text = "\u00D7",
-                FontFamily = UiFont,
+                FontFamily = _uiFont,
                 FontSize = 11,
                 Margin = new Thickness(0, -1, 0, 0)
             }

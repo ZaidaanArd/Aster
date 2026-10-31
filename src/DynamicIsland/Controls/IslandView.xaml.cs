@@ -73,6 +73,7 @@ public partial class IslandView : UserControl
     private bool _eyesShown;
     private bool _dozing;
     private bool _springRunning;
+    private double _springDamping = 21;
     private bool _wasCharging;
     private bool _initialized;
     private bool _toastVisible;
@@ -283,6 +284,21 @@ public partial class IslandView : UserControl
     {
         _collapsedWidth = _settings.Current.MinimalNotch ? 160 : 260;
         _collapsedHeight = _settings.Current.MinimalNotch ? 12 : 40;
+
+        var glass = _settings.Current.GlassBackground;
+        IslandBorder.Background = (Brush)FindResource(
+            glass ? "IslandGlassBackground" : "IslandSolidBackground");
+        ShadowBorder.Background = (Brush)FindResource(
+            glass ? "IslandGlassShadow" : "IslandSolidShadow");
+        LyricsPane.Background = (Brush)FindResource(
+            glass ? "IslandGlassLyrics" : "IslandSolidLyrics");
+        ToastBorder.Background = (Brush)FindResource(
+            glass ? "IslandGlassToast" : "IslandSolidToast");
+        GlassNoise.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
+        GlassTopGlow.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
+        GlassRim.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
+
+        _springDamping = _settings.Current.BouncySpring ? 21.0 : 27.0;
 
         var radius = 22;
         IslandBorder.CornerRadius = new CornerRadius(0, 0, radius, radius);
@@ -557,8 +573,8 @@ public partial class IslandView : UserControl
         var dt = Math.Min((now - _lastFrameTicks) / (double)Stopwatch.Frequency, 0.05);
         _lastFrameTicks = now;
 
-        var widthSettled = Step(ref _currentWidth, ref _velocityWidth, _targetWidth, dt);
-        var heightSettled = Step(ref _currentHeight, ref _velocityHeight, _targetHeight, dt);
+        var widthSettled = Step(ref _currentWidth, ref _velocityWidth, _targetWidth, dt, _springDamping);
+        var heightSettled = Step(ref _currentHeight, ref _velocityHeight, _targetHeight, dt, _springDamping);
 
         Width = _currentWidth;
         Height = _currentHeight;
@@ -591,17 +607,21 @@ public partial class IslandView : UserControl
         }
     }
 
-    private static bool Step(ref double value, ref double velocity, double target, double dt)
+    private static bool Step(
+        ref double value,
+        ref double velocity,
+        double target,
+        double dt,
+        double damping)
     {
         const double stiffness = 240.0;
-        const double damping = 27.0;
 
         var force = (target - value) * stiffness;
         velocity += force * dt;
         velocity *= Math.Exp(-damping * dt);
         value += velocity * dt;
 
-        if (Math.Abs(target - value) < 0.15 && Math.Abs(velocity) < 0.5)
+        if (Math.Abs(target - value) < 0.2 && Math.Abs(velocity) < 0.8)
         {
             value = target;
             velocity = 0;

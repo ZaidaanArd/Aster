@@ -277,6 +277,20 @@ public partial class MainWindow : Window
         }
     }
 
+    public void SetGlassBackground(bool enabled)
+    {
+        _settings.Current.GlassBackground = enabled;
+        _settings.Save();
+        _island.ApplySettings();
+    }
+
+    public void SetBouncySpring(bool enabled)
+    {
+        _settings.Current.BouncySpring = enabled;
+        _settings.Save();
+        _island.ApplySettings();
+    }
+
     public void ShowSettings()
     {
         if (_settingsWindow is { IsLoaded: true })
