@@ -332,17 +332,10 @@ public partial class IslandView : UserControl
             glass ? "IslandGlassLyrics" : "IslandSolidLyrics");
         ToastBorder.Background = (Brush)FindResource(
             glass ? "IslandGlassToast" : "IslandSolidToast");
-        GlassNoise.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
-        GlassTopGlow.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
-        GlassSpecular.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
-        GlassRim.Visibility = glass && _expanded ? Visibility.Visible : Visibility.Collapsed;
-        ArtGlow.Opacity = glass ? 1 : 0.45;
 
         _springDamping = _settings.Current.BouncySpring ? 21.0 : 27.0;
-
-        var radius = 22;
-        IslandBorder.CornerRadius = new CornerRadius(0, 0, radius, radius);
-        ShadowBorder.CornerRadius = new CornerRadius(0, 0, radius, radius);
+        UpdateChrome();
+        UpdateShape();
         CollapsedLayer.Visibility = _settings.Current.MinimalNotch ? Visibility.Collapsed : Visibility.Visible;
         CollapsedLayer.IsHitTestVisible = !_expanded;
 
@@ -371,6 +364,29 @@ public partial class IslandView : UserControl
         UpdateIdleVisual();
         UpdateWaterWidget();
         UpdateCompactVisual(animate: false);
+    }
+
+    private void UpdateChrome()
+    {
+        var glass = _settings.Current.GlassBackground;
+        var showGlassLayers = glass && _expanded;
+
+        GlassNoise.Visibility = showGlassLayers ? Visibility.Visible : Visibility.Collapsed;
+        GlassTopGlow.Visibility = showGlassLayers ? Visibility.Visible : Visibility.Collapsed;
+        GlassSpecular.Visibility = showGlassLayers ? Visibility.Visible : Visibility.Collapsed;
+        GlassRim.Visibility = showGlassLayers ? Visibility.Visible : Visibility.Collapsed;
+
+        ArtGlow.Visibility = _expanded ? Visibility.Visible : Visibility.Collapsed;
+        ArtGlow.Opacity = glass ? 1 : 0.45;
+    }
+
+    private void UpdateShape()
+    {
+        const double radius = 22;
+        var top = _expanded ? 0 : 19;
+        var corners = new CornerRadius(top, top, radius, radius);
+        IslandBorder.CornerRadius = corners;
+        ShadowBorder.CornerRadius = corners;
     }
 
     private void CheckHover()
@@ -452,9 +468,8 @@ public partial class IslandView : UserControl
 
         _expanded = expanded;
         CollapsedLayer.IsHitTestVisible = !expanded;
-        GlassRim.Visibility = expanded && _settings.Current.GlassBackground
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        UpdateChrome();
+        UpdateShape();
 
         _expandedWidth = PanelWidth;
         ExpandedLayer.Width = PanelWidth - 36;
@@ -1718,7 +1733,7 @@ public partial class IslandView : UserControl
 
         ArtGlow.Fill = CreateGlowBrush(color, 76);
         AmbientGlow.Fill = CreateGlowBrush(color, 92);
-        LyricsCardGlow.Fill = CreateCardGlowBrush(color);
+        LyricsCardGlow.Background = CreateCardGlowBrush(color);
     }
 
     private static RadialGradientBrush CreateCardGlowBrush(Color color)

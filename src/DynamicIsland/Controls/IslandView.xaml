@@ -563,26 +563,29 @@
                                             BorderBrush="{StaticResource LyricsCardStroke}"
                                             BorderThickness="1">
                                         <Grid>
-                                            <Rectangle x:Name="LyricsCardGlow" IsHitTestVisible="False">
-                                                <Rectangle.Fill>
+                                            <Border x:Name="LyricsCardGlow"
+                                                    CornerRadius="18"
+                                                    IsHitTestVisible="False">
+                                                <Border.Background>
                                                     <RadialGradientBrush>
                                                         <GradientStop Color="#00F6A6C8" Offset="0" />
                                                         <GradientStop Color="#00F6A6C8" Offset="1" />
                                                     </RadialGradientBrush>
-                                                </Rectangle.Fill>
-                                            </Rectangle>
+                                                </Border.Background>
+                                            </Border>
 
-                                            <Rectangle x:Name="LyricsCardSheen"
-                                                       Height="58"
-                                                       VerticalAlignment="Top"
-                                                       IsHitTestVisible="False">
-                                                <Rectangle.Fill>
+                                            <Border x:Name="LyricsCardSheen"
+                                                     Height="58"
+                                                     VerticalAlignment="Top"
+                                                     CornerRadius="18"
+                                                     IsHitTestVisible="False">
+                                                <Border.Background>
                                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                                         <GradientStop Color="#1AFFFFFF" Offset="0" />
                                                         <GradientStop Color="#00FFFFFF" Offset="1" />
                                                     </LinearGradientBrush>
-                                                </Rectangle.Fill>
-                                            </Rectangle>
+                                                </Border.Background>
+                                            </Border>
 
                                             <Grid x:Name="LyricsHost" />
                                         </Grid>
