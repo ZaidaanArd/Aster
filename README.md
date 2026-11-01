@@ -16,12 +16,15 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Tab Music / Camera / Shelf / Focus** — dock berlabel dengan active pill; ukuran panel tetap 500×252.
 - **Transisi panel** — slide + fade halus saat pindah tab, highlight dock ikut bergeser.
 - **Inter + glass** — UI memakai font Inter; panel memakai frosted glass dengan specular highlight,
-  rim light, noise halus, ambient glow dari album art, dan soft shadow. Bisa dimatikan di
-  **Settings → Appearance**.
+  rim light, noise halus, ambient glow dari album art, dan soft shadow. Bibir atas tanpa garis
+  border supaya menyatu ke tepi layar. Bisa dimatikan di **Settings → Appearance**.
 - **Dynamic album accent** — play button, waveform, equalizer, dan ambient glow mengikuti warna
   dominan album art (fallback `#F6A6C8`).
+- **Music tanpa card** — art, judul, waveform, dan kontrol langsung duduk di permukaan glass;
+  tidak ada kotak tambahan di sekitar lagu.
 - **Bouncy open/close** — spring hover sedikit overshoot sebelum settle; bisa dimatikan di Appearance.
-- **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik (204px) di kanan; media
+- **Lyrics di dalam Music** — tombol speech bubble membuka card lirik kaca rounded (204px) di kanan;
+  card memakai gradient gelap, ring putih, sheen atas, dan accent glow dari album. Media
   (260px) dan waveform bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
   tanpa tab terpisah dan tanpa kontrol start/pause ganda.
   Synced lyrics dari LRCLIB dengan baris aktif berupa pill warna yang bisa dikustom (default biru),
@@ -52,7 +55,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.9.0-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.9.1-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 

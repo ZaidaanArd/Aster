@@ -97,9 +97,9 @@
 
                 <Border x:Name="GlassRim"
                         Margin="1"
-                        CornerRadius="21"
+                        CornerRadius="0,0,21,21"
                         BorderBrush="{StaticResource IslandRimBrush}"
-                        BorderThickness="1"
+                        BorderThickness="0,0,1,1"
                         IsHitTestVisible="False" />
 
                 <!-- Collapsed: clock / timer / mascot, or now-playing -->
@@ -396,14 +396,7 @@
 
                             <StackPanel x:Name="MusicContent" Grid.Row="0" Orientation="Horizontal">
                                 <Grid x:Name="MusicMedia" Width="464" Height="152">
-                                    <Border x:Name="MusicInnerCard"
-                                            Margin="0,4,0,4"
-                                            CornerRadius="16"
-                                            Background="#0AFFFFFF"
-                                            BorderBrush="#14FFFFFF"
-                                            BorderThickness="1"
-                                            IsHitTestVisible="False" />
-                                    <Grid x:Name="MusicPanel" Margin="8,8,8,4">
+                                    <Grid x:Name="MusicPanel" Margin="0,8,0,4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="92" />
                                         <ColumnDefinition Width="16" />
@@ -562,16 +555,62 @@
                                 </Grid>
                                 </Grid>
 
-                                <!-- Lyrics pane: the LyricsView is added here in code-behind -->
+                                <!-- Lyrics pane: LyricsView is hosted inside the glass card -->
                                 <Grid x:Name="LyricsPane"
                                       Width="0"
                                       Height="152"
                                       Visibility="Collapsed"
                                       ClipToBounds="True"
-                                      Background="{StaticResource IslandGlassLyrics}">
+                                      Background="Transparent">
                                     <Grid.RenderTransform>
                                         <TranslateTransform x:Name="LyricsTranslate" />
                                     </Grid.RenderTransform>
+
+                                    <Border x:Name="LyricsCard"
+                                            Margin="8,2,6,6"
+                                            CornerRadius="18"
+                                            ClipToBounds="True"
+                                            Background="{StaticResource IslandGlassLyrics}"
+                                            BorderBrush="{StaticResource LyricsCardStroke}"
+                                            BorderThickness="1">
+                                        <Grid>
+                                            <Rectangle x:Name="LyricsCardGlow" IsHitTestVisible="False">
+                                                <Rectangle.Fill>
+                                                    <RadialGradientBrush>
+                                                        <GradientStop Color="#00F6A6C8" Offset="0" />
+                                                        <GradientStop Color="#00F6A6C8" Offset="1" />
+                                                    </RadialGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+
+                                            <Rectangle x:Name="LyricsCardSheen"
+                                                       Height="58"
+                                                       VerticalAlignment="Top"
+                                                       IsHitTestVisible="False">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#1AFFFFFF" Offset="0" />
+                                                        <GradientStop Color="#00FFFFFF" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+
+                                            <Border Height="1"
+                                                    VerticalAlignment="Top"
+                                                    Margin="12,1,12,0"
+                                                    IsHitTestVisible="False">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#70FFFFFF" Offset="0" />
+                                                        <GradientStop Color="#18FFFFFF" Offset="0.55" />
+                                                        <GradientStop Color="#00FFFFFF" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                            </Border>
+
+                                            <Grid x:Name="LyricsHost" />
+                                        </Grid>
+                                    </Border>
                                 </Grid>
                             </StackPanel>
 

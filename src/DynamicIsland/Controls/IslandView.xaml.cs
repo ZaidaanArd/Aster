@@ -161,11 +161,17 @@ public partial class IslandView : UserControl
 
         _lyricsView = new LyricsView(media, lyrics, settings)
         {
-            Width = LyricsPaneWidth,
+            Width = Math.Max(
+                0,
+                LyricsPaneWidth -
+                LyricsCard.Margin.Left -
+                LyricsCard.Margin.Right -
+                LyricsCard.BorderThickness.Left -
+                LyricsCard.BorderThickness.Right),
             HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top
+            VerticalAlignment = VerticalAlignment.Stretch
         };
-        LyricsPane.Children.Add(_lyricsView);
+        LyricsHost.Children.Add(_lyricsView);
 
         _cameraView = new CameraView(camera, settings);
         CameraHost.Children.Add(_cameraView);
@@ -326,7 +332,7 @@ public partial class IslandView : UserControl
             glass ? "IslandGlassBackground" : "IslandSolidBackground");
         ShadowBorder.Background = (Brush)FindResource(
             glass ? "IslandGlassShadow" : "IslandSolidShadow");
-        LyricsPane.Background = (Brush)FindResource(
+        LyricsCard.Background = (Brush)FindResource(
             glass ? "IslandGlassLyrics" : "IslandSolidLyrics");
         ToastBorder.Background = (Brush)FindResource(
             glass ? "IslandGlassToast" : "IslandSolidToast");
@@ -1726,6 +1732,25 @@ public partial class IslandView : UserControl
 
         ArtGlow.Fill = CreateGlowBrush(color, 76);
         AmbientGlow.Fill = CreateGlowBrush(color, 92);
+        LyricsCardGlow.Fill = CreateCardGlowBrush(color);
+    }
+
+    private static RadialGradientBrush CreateCardGlowBrush(Color color)
+    {
+        var brush = new RadialGradientBrush
+        {
+            GradientOrigin = new Point(0.82, 0.04),
+            Center = new Point(0.82, 0.04),
+            RadiusX = 0.9,
+            RadiusY = 1.0
+        };
+        brush.GradientStops.Add(new GradientStop(
+            Color.FromArgb(36, color.R, color.G, color.B), 0));
+        brush.GradientStops.Add(new GradientStop(
+            Color.FromArgb(12, color.R, color.G, color.B), 0.55));
+        brush.GradientStops.Add(new GradientStop(
+            Color.FromArgb(0, color.R, color.G, color.B), 1));
+        return brush;
     }
 
     private static RadialGradientBrush CreateGlowBrush(Color color, byte centerAlpha)

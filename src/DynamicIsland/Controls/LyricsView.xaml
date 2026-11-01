@@ -9,7 +9,7 @@
              Focusable="False"
              Background="Transparent">
 
-    <Grid Margin="3,5,2,5">
+    <Grid Margin="4,7,4,5">
         <Grid.RowDefinitions>
             <RowDefinition Height="22" />
             <RowDefinition Height="*" />
@@ -54,15 +54,6 @@
                     </TextBlock.RenderTransform>
                 </TextBlock>
             </Button>
-
-            <Border Height="1" VerticalAlignment="Bottom" IsHitTestVisible="False">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="#1FFFFFFF" Offset="0" />
-                        <GradientStop Color="#04FFFFFF" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
-            </Border>
         </Grid>
 
         <ScrollViewer x:Name="LyricsScroll"

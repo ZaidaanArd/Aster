@@ -8,8 +8,21 @@
     <SolidColorBrush x:Key="IslandSolidBackground" Color="#F2070708" />
     <SolidColorBrush x:Key="IslandGlassShadow" Color="#1A000000" />
     <SolidColorBrush x:Key="IslandSolidShadow" Color="#000000" />
-    <SolidColorBrush x:Key="IslandGlassLyrics" Color="#EA0B0B10" />
-    <SolidColorBrush x:Key="IslandSolidLyrics" Color="#000000" />
+    <LinearGradientBrush x:Key="IslandGlassLyrics" StartPoint="0,0" EndPoint="0.35,1">
+        <GradientStop Color="#E8111118" Offset="0" />
+        <GradientStop Color="#DE0C0C12" Offset="0.55" />
+        <GradientStop Color="#D809090E" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="IslandSolidLyrics" StartPoint="0,0" EndPoint="0.35,1">
+        <GradientStop Color="#F014141A" Offset="0" />
+        <GradientStop Color="#EA0D0D12" Offset="0.55" />
+        <GradientStop Color="#E60A0A0E" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LyricsCardStroke" StartPoint="0,0" EndPoint="0.45,1">
+        <GradientStop Color="#4DFFFFFF" Offset="0" />
+        <GradientStop Color="#24FFFFFF" Offset="0.42" />
+        <GradientStop Color="#12FFFFFF" Offset="1" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="IslandGlassToast" Color="#E61B1B22" />
     <SolidColorBrush x:Key="IslandSolidToast" Color="#FF1B1B1F" />
     <LinearGradientBrush x:Key="IslandRimBrush" StartPoint="0,0" EndPoint="0,1">
