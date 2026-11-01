@@ -8,9 +8,12 @@ namespace DynamicIsland.Controls;
 
 public partial class FocusView : UserControl
 {
-    private static readonly Brush ActiveChipBrush = new SolidColorBrush(Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF));
+    private const double RingCenter = 75;
+    private const double RingRadius = 72;
+
+    private static readonly Brush ActiveChipBrush = new SolidColorBrush(Color.FromArgb(0x1F, 0xFF, 0xB8, 0x6B));
     private static readonly Brush InactiveChipBrush = Brushes.Transparent;
-    private static readonly Brush ActiveTextBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF7));
+    private static readonly Brush ActiveTextBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0xB8, 0x6B));
     private static readonly Brush InactiveTextBrush = new SolidColorBrush(Color.FromRgb(0x94, 0x94, 0x9C));
 
     private readonly FocusService _focus;
@@ -53,7 +56,9 @@ public partial class FocusView : UserControl
     {
         UpdateProgress();
 
-        StartGlyph.Text = _focus.IsRunning ? "\uE769" : "\uE768";
+        StartButton.Content = _focus.IsRunning ? "Pause" : "Start";
+        StartButton.ToolTip = _focus.IsRunning ? "Pause" : "Start";
+        StartButton.Visibility = _focus.IsComplete ? Visibility.Collapsed : Visibility.Visible;
 
         FocusChip.Content = $"Focus {Minutes(_focus.DurationFor(FocusPhase.Focus))}";
         ShortChip.Content = $"Short {Minutes(_focus.DurationFor(FocusPhase.ShortBreak))}";
@@ -62,6 +67,22 @@ public partial class FocusView : UserControl
         SetChipActive(FocusChip, _focus.Phase == FocusPhase.Focus);
         SetChipActive(ShortChip, _focus.Phase == FocusPhase.ShortBreak);
         SetChipActive(LongChip, _focus.Phase == FocusPhase.LongBreak);
+
+        ModeLabelText.Text = _focus.Phase == FocusPhase.Focus ? "FOCUS SESSION" : "BREAK";
+        FocusTitleText.Text = _focus.Phase switch
+        {
+            FocusPhase.Focus => "Focus session",
+            FocusPhase.ShortBreak => "Short break",
+            FocusPhase.LongBreak => "Long break",
+            _ => "Focus session"
+        };
+        RingPhaseText.Text = _focus.Phase switch
+        {
+            FocusPhase.Focus => "DEEP WORK",
+            FocusPhase.ShortBreak => "SHORT BREAK",
+            FocusPhase.LongBreak => "LONG BREAK",
+            _ => "DEEP WORK"
+        };
 
         if (_focus.IsComplete)
         {
@@ -75,11 +96,21 @@ public partial class FocusView : UserControl
         }
         else
         {
-            SessionText.Text = _focus.CompletedSessionsToday == 1
-                ? "1 session today"
-                : $"{_focus.CompletedSessionsToday} sessions today";
+            SessionText.Text = _focus.Phase switch
+            {
+                FocusPhase.Focus => $"Notifications muted while the timer runs. {SessionsText()}.",
+                FocusPhase.ShortBreak => $"Step away for a moment. {SessionsText()}.",
+                FocusPhase.LongBreak => $"A longer pause to reset. {SessionsText()}.",
+                _ => $"Notifications muted while the timer runs. {SessionsText()}."
+            };
             BreakButton.Visibility = Visibility.Collapsed;
         }
+    }
+
+    private string SessionsText()
+    {
+        var count = _focus.CompletedSessionsToday;
+        return count == 1 ? "1 session today" : $"{count} sessions today";
     }
 
     private void UpdateProgress()
@@ -92,14 +123,55 @@ public partial class FocusView : UserControl
 
         var total = _focus.Duration.TotalMilliseconds;
         var ratio = total > 0
-            ? Math.Clamp(1 - _focus.Remaining.TotalMilliseconds / total, 0, 1)
+            ? Math.Clamp(_focus.Remaining.TotalMilliseconds / total, 0, 1)
             : 0;
 
-        var width = ProgressHit.ActualWidth;
-        if (width > 0)
+        UpdateRing(ratio);
+    }
+
+    private void UpdateRing(double ratio)
+    {
+        if (ratio >= 0.999)
         {
-            ProgressFill.Width = width * ratio;
+            ProgressRingFull.Visibility = Visibility.Visible;
+            ProgressArc.Visibility = Visibility.Collapsed;
+            return;
         }
+
+        ProgressRingFull.Visibility = Visibility.Collapsed;
+
+        if (ratio <= 0.001)
+        {
+            ProgressArc.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        ProgressArc.Visibility = Visibility.Visible;
+
+        var start = new Point(RingCenter, RingCenter - RingRadius);
+        var angle = -90 + ratio * 360;
+        var radians = angle * Math.PI / 180;
+        var end = new Point(
+            RingCenter + RingRadius * Math.Cos(radians),
+            RingCenter + RingRadius * Math.Sin(radians));
+
+        var figure = new PathFigure
+        {
+            StartPoint = start,
+            IsClosed = false,
+            IsFilled = false
+        };
+        figure.Segments.Add(new ArcSegment(
+            end,
+            new Size(RingRadius, RingRadius),
+            0,
+            ratio > 0.5,
+            SweepDirection.Clockwise,
+            true));
+
+        var geometry = new PathGeometry();
+        geometry.Figures.Add(figure);
+        ProgressArc.Data = geometry;
     }
 
     private static void SetChipActive(Button chip, bool active)
@@ -150,10 +222,5 @@ public partial class FocusView : UserControl
     private void OnBreakClick(object sender, RoutedEventArgs e)
     {
         _focus.StartSuggestedNext();
-    }
-
-    private void OnProgressSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        UpdateProgress();
     }
 }

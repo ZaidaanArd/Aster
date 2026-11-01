@@ -28,15 +28,16 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
   (260px) dan waveform bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
   tanpa tab terpisah dan tanpa kontrol start/pause ganda.
   Synced lyrics dari LRCLIB dengan baris aktif berupa pill warna yang bisa dikustom (default biru),
-  progress underline tipis di baris aktif, fade atas/bawah, distance dimming,
+  fade atas/bawah, distance dimming,
   auto-scroll halus, klik baris untuk seek, fallback plain lyrics, dan cache lokal.
 - **Camera** — tab kamera dengan preview live 16:9, mirror toggle, dan shutter. Foto
   full-resolution disimpan ke `Pictures\DynamicIsland\Camera`. Kamera hanya aktif selama
   tab Camera terbuka dan island expanded.
 - **File shelf** — drag file dari Explorer ke island, simpan sementara sebagai referensi path,
   lalu drag keluar ke Explorer/Discord/email. Maksimal 8 item, session-only.
-- **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), start/pause/reset, progress, session counter,
-  chime, dan saran short/long break setiap 4 sesi. Saat timer jalan, pill menampilkan sisa waktu.
+- **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), ring timer amber, start/pause/reset,
+  session counter, chime, dan saran short/long break setiap 4 sesi. Saat timer jalan,
+  pill menampilkan sisa waktu.
 - **Water reminder** — toast droplet di pill sesuai interval, header 8 water bars + counter `3/8`,
   klik untuk mencatat gelas. Reminder berhenti saat goal tercapai dan ditahan saat island disembunyikan.
 - **Media player** — judul, artis, album art dengan vinyl yang berputar, stylized waveform progress,
@@ -55,7 +56,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.9.1-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.9.2-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -207,7 +208,7 @@ src/DynamicIsland/
 ├─ Controls/FocusView.*       UI focus timer (chips, countdown, progress, kontrol)
 ├─ Controls/CameraView.*      tab kamera (preview, mirror, shutter, status)
 ├─ Controls/ShelfView.*       file shelf (cards, drag-out, empty state, clear)
-├─ Controls/LyricsView.*      pane lirik (header, status, refresh, highlight, underline, auto-scroll)
+├─ Controls/LyricsView.*      pane lirik (header, status, refresh, highlight, auto-scroll)
 ├─ SettingsWindow.*           settings window dark (general, appearance, lyrics, focus, water, data)
 ├─ Services/
 │  ├─ MediaService.cs         WinRT GSMTC: now playing, artwork, kontrol

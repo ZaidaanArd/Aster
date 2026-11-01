@@ -58,7 +58,6 @@ public partial class IslandView : UserControl
     private readonly LyricsService _lyrics;
     private readonly LyricsView _lyricsView;
     private readonly WaterService _water;
-    private readonly CameraService _camera;
     private readonly CameraView _cameraView;
     private readonly ShelfView _shelfView;
     private readonly SolidColorBrush _accentBrush = new(ArtworkAccent.Fallback);
@@ -145,7 +144,6 @@ public partial class IslandView : UserControl
         _focus = focus;
         _lyrics = lyrics;
         _water = water;
-        _camera = camera;
 
         InitializeComponent();
 
@@ -275,7 +273,6 @@ public partial class IslandView : UserControl
         _water.StateChanged += OnWaterStateChanged;
         _shelfView.ItemsChanged += OnShelfItemsChanged;
         _shelfView.DragOutChanged += OnShelfDragOutChanged;
-        _camera.StatusChanged += OnCameraStatusChanged;
 
         _wasFocusRunning = _focus.IsRunning;
         UpdateTabVisuals();
@@ -316,7 +313,6 @@ public partial class IslandView : UserControl
         _water.StateChanged -= OnWaterStateChanged;
         _shelfView.ItemsChanged -= OnShelfItemsChanged;
         _shelfView.DragOutChanged -= OnShelfDragOutChanged;
-        _camera.StatusChanged -= OnCameraStatusChanged;
         IsVisibleChanged -= OnIslandVisibilityChanged;
         _cameraView.SetActive(false);
         _initialized = false;
@@ -339,7 +335,7 @@ public partial class IslandView : UserControl
         GlassNoise.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
         GlassTopGlow.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
         GlassSpecular.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
-        GlassRim.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
+        GlassRim.Visibility = glass && _expanded ? Visibility.Visible : Visibility.Collapsed;
         ArtGlow.Opacity = glass ? 1 : 0.45;
 
         _springDamping = _settings.Current.BouncySpring ? 21.0 : 27.0;
@@ -456,6 +452,9 @@ public partial class IslandView : UserControl
 
         _expanded = expanded;
         CollapsedLayer.IsHitTestVisible = !expanded;
+        GlassRim.Visibility = expanded && _settings.Current.GlassBackground
+            ? Visibility.Visible
+            : Visibility.Collapsed;
 
         _expandedWidth = PanelWidth;
         ExpandedLayer.Width = PanelWidth - 36;
@@ -502,19 +501,6 @@ public partial class IslandView : UserControl
         DebugLog.Write(
             $"camera activation mode={_mode} expanded={_expanded} visible={IsVisible} active={active}");
         _cameraView.SetActive(active);
-        UpdateCameraDot();
-    }
-
-    private void OnCameraStatusChanged(CameraStatus status)
-    {
-        Dispatcher.BeginInvoke(new Action(UpdateCameraDot));
-    }
-
-    private void UpdateCameraDot()
-    {
-        var active = _mode == PanelMode.Camera && _expanded && IsVisible && _camera.IsLive;
-        CameraDot.Opacity = active ? 1 : 0.22;
-        CameraDot.Fill = _camera.IsLive ? GreenBrush : WaterBrush;
     }
 
     private void OnShelfItemsChanged()

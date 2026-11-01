@@ -48,8 +48,6 @@
 
         <Border x:Name="IslandBorder"
                 Background="{StaticResource IslandGlassBackground}"
-                BorderBrush="{StaticResource IslandStroke}"
-                BorderThickness="0,0,1,1"
                 CornerRadius="0,0,22,22"
                 ClipToBounds="True">
             <Grid>
@@ -303,19 +301,10 @@
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    ToolTip="Camera status">
-                            <Ellipse x:Name="CameraDot"
-                                     Width="5"
-                                     Height="5"
-                                     Fill="{StaticResource AccentGreen}"
-                                     Opacity="0.22" />
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center">
                             <Button x:Name="WaterButton"
-                                    Style="{StaticResource GlyphButton}"
+                                    Style="{StaticResource WaterGlassButton}"
                                     Width="Auto"
                                     Height="18"
                                     Padding="6,0"
@@ -594,19 +583,6 @@
                                                     </LinearGradientBrush>
                                                 </Rectangle.Fill>
                                             </Rectangle>
-
-                                            <Border Height="1"
-                                                    VerticalAlignment="Top"
-                                                    Margin="12,1,12,0"
-                                                    IsHitTestVisible="False">
-                                                <Border.Background>
-                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                        <GradientStop Color="#70FFFFFF" Offset="0" />
-                                                        <GradientStop Color="#18FFFFFF" Offset="0.55" />
-                                                        <GradientStop Color="#00FFFFFF" Offset="1" />
-                                                    </LinearGradientBrush>
-                                                </Border.Background>
-                                            </Border>
 
                                             <Grid x:Name="LyricsHost" />
                                         </Grid>

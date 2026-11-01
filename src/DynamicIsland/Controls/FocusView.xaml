@@ -5,113 +5,125 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignWidth="464"
-             d:DesignHeight="148"
+             d:DesignHeight="170"
              Focusable="False"
              Background="Transparent">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="188" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Center"
-                    Margin="0,1,0,0">
-            <Button x:Name="FocusChip"
-                    Style="{StaticResource ChipButton}"
-                    Content="Focus 25"
-                    Margin="0,0,4,0"
-                    Click="OnFocusChipClick" />
-            <Button x:Name="ShortChip"
-                    Style="{StaticResource ChipButton}"
-                    Content="Short 5"
-                    Margin="0,0,4,0"
-                    Click="OnShortChipClick" />
-            <Button x:Name="LongChip"
-                    Style="{StaticResource ChipButton}"
-                    Content="Long 15"
-                    Click="OnLongChipClick" />
-        </StackPanel>
+        <Grid Grid.Column="0"
+              Width="150"
+              Height="150"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center">
+            <Ellipse Width="144"
+                     Height="144"
+                     Stroke="#14FFFFFF"
+                     StrokeThickness="6" />
+            <Ellipse x:Name="ProgressRingFull"
+                     Width="144"
+                     Height="144"
+                     Stroke="{StaticResource FocusAccent}"
+                     StrokeThickness="6"
+                     Visibility="Collapsed" />
+            <Path x:Name="ProgressArc"
+                  Stroke="{StaticResource FocusAccent}"
+                  StrokeThickness="6"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  Fill="Transparent" />
 
-        <StackPanel Grid.Row="1" VerticalAlignment="Center">
-            <TextBlock x:Name="CountdownText"
-                       Text="25:00"
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <TextBlock x:Name="CountdownText"
+                           Text="25:00"
+                           FontFamily="{StaticResource UiFont}"
+                           FontSize="30"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimary}"
+                           HorizontalAlignment="Center"
+                           Typography.NumeralAlignment="Tabular"
+                           Typography.NumeralStyle="Lining" />
+                <TextBlock x:Name="RingPhaseText"
+                           Text="DEEP WORK"
+                           FontFamily="{StaticResource UiFont}"
+                           FontSize="8.5"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondary}"
+                           HorizontalAlignment="Center"
+                           Margin="0,3,0,0" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Margin="10,0,0,0">
+            <TextBlock x:Name="ModeLabelText"
+                       Text="FOCUS SESSION"
                        FontFamily="{StaticResource UiFont}"
-                       FontSize="42"
+                       FontSize="9"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource TextSecondary}" />
+            <TextBlock x:Name="FocusTitleText"
+                       Text="Focus session"
+                       FontFamily="{StaticResource UiFont}"
+                       FontSize="24"
                        FontWeight="SemiBold"
                        Foreground="{StaticResource TextPrimary}"
-                       HorizontalAlignment="Center"
-                       Typography.NumeralAlignment="Tabular"
-                       Typography.NumeralStyle="Lining" />
+                       TextTrimming="CharacterEllipsis"
+                       Margin="0,3,0,0" />
+            <TextBlock x:Name="SessionText"
+                       FontFamily="{StaticResource UiFont}"
+                       FontSize="11"
+                       Foreground="{StaticResource TextSecondary}"
+                       TextWrapping="Wrap"
+                       LineHeight="16"
+                       MaxWidth="252"
+                       Margin="0,5,0,0"
+                       Text="Notifications muted while the timer runs. 0 sessions today." />
 
-            <Grid x:Name="ProgressHit"
-                  Height="10"
-                  Margin="56,1,56,0"
-                  Background="Transparent"
-                  SizeChanged="OnProgressSizeChanged">
-                <Border Height="4"
-                        CornerRadius="2"
-                        Background="{StaticResource TrackBrush}"
-                        VerticalAlignment="Center" />
-                <Border x:Name="ProgressFill"
-                        Height="4"
-                        CornerRadius="2"
-                        Background="{StaticResource FocusAccent}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Width="0" />
-            </Grid>
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,9,0,0">
+                <Button x:Name="FocusChip"
+                        Style="{StaticResource ChipButton}"
+                        Content="Focus 25"
+                        Margin="0,0,4,0"
+                        Click="OnFocusChipClick" />
+                <Button x:Name="ShortChip"
+                        Style="{StaticResource ChipButton}"
+                        Content="Short 5"
+                        Margin="0,0,4,0"
+                        Click="OnShortChipClick" />
+                <Button x:Name="LongChip"
+                        Style="{StaticResource ChipButton}"
+                        Content="Long 15"
+                        Click="OnLongChipClick" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,9,0,0">
+                <Button x:Name="StartButton"
+                        Style="{StaticResource FocusPrimaryButton}"
+                        Content="Start"
+                        Click="OnStartClick"
+                        ToolTip="Start" />
+                <Button x:Name="ResetButton"
+                        Style="{StaticResource FocusGhostButton}"
+                        Content="Reset"
+                        Margin="8,0,0,0"
+                        Click="OnResetClick"
+                        ToolTip="Reset" />
+                <Button x:Name="BreakButton"
+                        Style="{StaticResource FocusPrimaryButton}"
+                        Content="Start break"
+                        Margin="8,0,0,0"
+                        Visibility="Collapsed"
+                        Click="OnBreakClick" />
+            </StackPanel>
         </StackPanel>
-
-        <StackPanel Grid.Row="2"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Center"
-                    Margin="0,2,0,0">
-            <Button x:Name="StartButton"
-                    Style="{StaticResource PlayButton}"
-                    Width="40"
-                    Height="40"
-                    Click="OnStartClick"
-                    ToolTip="Start / pause">
-                <TextBlock x:Name="StartGlyph"
-                           Text="&#xE768;"
-                           FontFamily="{StaticResource GlyphFont}"
-                           FontSize="14"
-                           Margin="1,0,0,0" />
-            </Button>
-            <Button x:Name="ResetButton"
-                    Style="{StaticResource GlyphButton}"
-                    Width="36"
-                    Height="36"
-                    Margin="10,0,0,0"
-                    Click="OnResetClick"
-                    ToolTip="Reset">
-                <TextBlock Text="&#xE72C;"
-                           FontFamily="{StaticResource GlyphFont}"
-                           FontSize="13" />
-            </Button>
-            <Button x:Name="BreakButton"
-                    Style="{StaticResource DarkButton}"
-                    Content="Start break"
-                    Margin="10,0,0,0"
-                    Padding="10,5"
-                    FontSize="10.5"
-                    VerticalAlignment="Center"
-                    Visibility="Collapsed"
-                    Click="OnBreakClick" />
-        </StackPanel>
-
-        <TextBlock x:Name="SessionText"
-                   Grid.Row="3"
-                   FontFamily="{StaticResource UiFont}"
-                   FontSize="9.5"
-                   Foreground="{StaticResource TextTertiary}"
-                   HorizontalAlignment="Center"
-                   Margin="0,1,0,0"
-                   Text="0 sessions today" />
     </Grid>
 </UserControl>
