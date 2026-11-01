@@ -383,8 +383,7 @@ public partial class IslandView : UserControl
     private void UpdateShape()
     {
         const double radius = 22;
-        var top = _expanded ? 0 : 19;
-        var corners = new CornerRadius(top, top, radius, radius);
+        var corners = new CornerRadius(0, 0, radius, radius);
         IslandBorder.CornerRadius = corners;
         ShadowBorder.CornerRadius = corners;
     }

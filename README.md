@@ -56,7 +56,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.9.3-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.9.4-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
