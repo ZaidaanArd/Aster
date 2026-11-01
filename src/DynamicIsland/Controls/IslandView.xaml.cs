@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using DynamicIsland.Interop;
 using DynamicIsland.Services;
@@ -43,6 +44,8 @@ public partial class IslandView : UserControl
     private static readonly Brush LyricsButtonInactiveBrush = new SolidColorBrush(Color.FromRgb(0x94, 0x94, 0x9C));
     private static readonly Brush LyricsButtonActiveBrush = new SolidColorBrush(Color.FromArgb(0x33, 0x7C, 0x9C, 0xFF));
     private static readonly Brush WaterBrush = new SolidColorBrush(Color.FromRgb(0x7F, 0xB8, 0xFF));
+    private static readonly Brush WaterTrackBrush = new SolidColorBrush(Color.FromArgb(0x2E, 0xFF, 0xFF, 0xFF));
+    private static readonly Brush PlayGlyphBrush = new SolidColorBrush(Color.FromRgb(0x08, 0x08, 0x0A));
 
     private readonly SettingsService _settings;
     private readonly MediaService _media;
@@ -55,8 +58,14 @@ public partial class IslandView : UserControl
     private readonly LyricsService _lyrics;
     private readonly LyricsView _lyricsView;
     private readonly WaterService _water;
+    private readonly CameraService _camera;
     private readonly CameraView _cameraView;
     private readonly ShelfView _shelfView;
+    private readonly SolidColorBrush _accentBrush = new(ArtworkAccent.Fallback);
+    private readonly Border[] _waterBars;
+    private readonly ScaleTransform[] _eqBars;
+    private readonly double[] _eqLevels = { 0.52, 0.8, 0.38, 0.68, 0.58 };
+    private readonly double[] _eqTargets = { 0.9, 0.4, 0.82, 0.5, 1.0 };
 
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _hoverTimer;
@@ -65,11 +74,13 @@ public partial class IslandView : UserControl
     private readonly DispatcherTimer _idleTimer;
     private readonly DispatcherTimer _blinkTimer;
     private readonly DispatcherTimer _toastTimer;
+    private readonly DispatcherTimer _equalizerTimer;
     private readonly Random _random = new();
 
     private MediaSnapshot? _snapshot;
     private bool _expanded;
     private bool _hovering;
+    private bool _hoverSuppressed;
     private bool _eyesShown;
     private bool _dozing;
     private bool _springRunning;
@@ -80,14 +91,20 @@ public partial class IslandView : UserControl
     private int _toastToken;
     private Action? _toastClick;
 
-    private double _currentWidth = 260;
-    private double _currentHeight = 40;
+    private bool _compactMediaVisible;
+    private int _compactAnimationToken;
+    private bool _vinylRunning;
+    private Color _accentColor = ArtworkAccent.Fallback;
+    private bool _accentApplied;
+
+    private double _currentWidth = 300;
+    private double _currentHeight = 38;
     private double _velocityWidth;
     private double _velocityHeight;
-    private double _targetWidth = 260;
-    private double _targetHeight = 40;
-    private double _collapsedWidth = 260;
-    private double _collapsedHeight = 40;
+    private double _targetWidth = 300;
+    private double _targetHeight = 38;
+    private double _collapsedWidth = 300;
+    private double _collapsedHeight = 38;
     private double _expandedWidth = PanelWidth;
     private long _lastFrameTicks;
 
@@ -128,8 +145,16 @@ public partial class IslandView : UserControl
         _focus = focus;
         _lyrics = lyrics;
         _water = water;
+        _camera = camera;
 
         InitializeComponent();
+
+        _waterBars = new[]
+        {
+            WaterBar1, WaterBar2, WaterBar3, WaterBar4,
+            WaterBar5, WaterBar6, WaterBar7, WaterBar8
+        };
+        _eqBars = new[] { EqBar1, EqBar2, EqBar3, EqBar4, EqBar5 };
 
         _focusView = new FocusView(focus);
         FocusHost.Children.Add(_focusView);
@@ -202,6 +227,12 @@ public partial class IslandView : UserControl
             HideToast();
         };
 
+        _equalizerTimer = new DispatcherTimer(DispatcherPriority.Render)
+        {
+            Interval = TimeSpan.FromMilliseconds(120)
+        };
+        _equalizerTimer.Tick += (_, _) => TickEqualizer();
+
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -223,6 +254,8 @@ public partial class IslandView : UserControl
         UpdateMediaUI(_snapshot);
         UpdateProgress();
         UpdateWaterWidget();
+        UpdateCompactVisual(animate: false);
+        ApplyAccentColor(ArtworkAccent.Extract(_snapshot?.Artwork));
 
         _media.SnapshotChanged += OnMediaSnapshot;
         _audio.VolumeChanged += OnVolumeChanged;
@@ -236,6 +269,7 @@ public partial class IslandView : UserControl
         _water.StateChanged += OnWaterStateChanged;
         _shelfView.ItemsChanged += OnShelfItemsChanged;
         _shelfView.DragOutChanged += OnShelfDragOutChanged;
+        _camera.StatusChanged += OnCameraStatusChanged;
 
         _wasFocusRunning = _focus.IsRunning;
         UpdateTabVisuals();
@@ -259,6 +293,7 @@ public partial class IslandView : UserControl
         _idleTimer.Stop();
         _blinkTimer.Stop();
         _toastTimer.Stop();
+        _equalizerTimer.Stop();
         _modeAnimationTimer?.Stop();
         CompositionTarget.Rendering -= OnRendering;
         _springRunning = false;
@@ -275,6 +310,7 @@ public partial class IslandView : UserControl
         _water.StateChanged -= OnWaterStateChanged;
         _shelfView.ItemsChanged -= OnShelfItemsChanged;
         _shelfView.DragOutChanged -= OnShelfDragOutChanged;
+        _camera.StatusChanged -= OnCameraStatusChanged;
         IsVisibleChanged -= OnIslandVisibilityChanged;
         _cameraView.SetActive(false);
         _initialized = false;
@@ -282,8 +318,8 @@ public partial class IslandView : UserControl
 
     public void ApplySettings()
     {
-        _collapsedWidth = _settings.Current.MinimalNotch ? 160 : 260;
-        _collapsedHeight = _settings.Current.MinimalNotch ? 12 : 40;
+        _collapsedWidth = _settings.Current.MinimalNotch ? 160 : 300;
+        _collapsedHeight = _settings.Current.MinimalNotch ? 12 : 38;
 
         var glass = _settings.Current.GlassBackground;
         IslandBorder.Background = (Brush)FindResource(
@@ -296,7 +332,9 @@ public partial class IslandView : UserControl
             glass ? "IslandGlassToast" : "IslandSolidToast");
         GlassNoise.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
         GlassTopGlow.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
+        GlassSpecular.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
         GlassRim.Visibility = glass ? Visibility.Visible : Visibility.Collapsed;
+        ArtGlow.Opacity = glass ? 1 : 0.45;
 
         _springDamping = _settings.Current.BouncySpring ? 21.0 : 27.0;
 
@@ -304,6 +342,7 @@ public partial class IslandView : UserControl
         IslandBorder.CornerRadius = new CornerRadius(0, 0, radius, radius);
         ShadowBorder.CornerRadius = new CornerRadius(0, 0, radius, radius);
         CollapsedLayer.Visibility = _settings.Current.MinimalNotch ? Visibility.Collapsed : Visibility.Visible;
+        CollapsedLayer.IsHitTestVisible = !_expanded;
 
         if (!_expanded)
         {
@@ -318,6 +357,8 @@ public partial class IslandView : UserControl
 
             ExpandedLayer.Opacity = 0;
             CollapsedLayer.Opacity = _settings.Current.MinimalNotch ? 0 : 1;
+            AmbientGlowHost.Opacity = 0;
+            AmbientGlowHost.Visibility = Visibility.Collapsed;
         }
 
         if (!_settings.Current.ShowMascot)
@@ -327,6 +368,7 @@ public partial class IslandView : UserControl
 
         UpdateIdleVisual();
         UpdateWaterWidget();
+        UpdateCompactVisual(animate: false);
     }
 
     private void CheckHover()
@@ -359,6 +401,11 @@ public partial class IslandView : UserControl
             var inside = rect.Contains(cursor.X, cursor.Y);
             if (inside == _hovering)
             {
+                if (!inside)
+                {
+                    _hoverSuppressed = false;
+                }
+
                 return;
             }
 
@@ -367,12 +414,18 @@ public partial class IslandView : UserControl
 
             if (inside)
             {
+                if (_hoverSuppressed)
+                {
+                    return;
+                }
+
                 _collapseTimer.Stop();
                 Wake();
                 SetExpanded(true);
             }
             else
             {
+                _hoverSuppressed = false;
                 _collapseTimer.Stop();
                 _collapseTimer.Start();
             }
@@ -396,6 +449,7 @@ public partial class IslandView : UserControl
         }
 
         _expanded = expanded;
+        CollapsedLayer.IsHitTestVisible = !expanded;
 
         _expandedWidth = PanelWidth;
         ExpandedLayer.Width = PanelWidth - 36;
@@ -407,15 +461,23 @@ public partial class IslandView : UserControl
 
         if (expanded)
         {
+            _equalizerTimer.Stop();
             _lastActivity = DateTime.Now;
             ShowClock();
+            AmbientGlowHost.Visibility = Visibility.Visible;
             if (_focus.HasSession)
             {
                 SetMode(PanelMode.Focus, animate: false);
             }
 
             UpdateMediaUI(_snapshot);
+            UpdateProgress();
             UpdateTabVisuals();
+        }
+        else
+        {
+            UpdateCompactVisual(animate: false);
+            UpdateEqualizerTimer();
         }
 
         UpdateCameraActivation();
@@ -425,6 +487,7 @@ public partial class IslandView : UserControl
     private void OnIslandVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         UpdateCameraActivation();
+        UpdateEqualizerTimer();
     }
 
     private void UpdateCameraActivation()
@@ -433,6 +496,19 @@ public partial class IslandView : UserControl
         DebugLog.Write(
             $"camera activation mode={_mode} expanded={_expanded} visible={IsVisible} active={active}");
         _cameraView.SetActive(active);
+        UpdateCameraDot();
+    }
+
+    private void OnCameraStatusChanged(CameraStatus status)
+    {
+        Dispatcher.BeginInvoke(new Action(UpdateCameraDot));
+    }
+
+    private void UpdateCameraDot()
+    {
+        var active = _mode == PanelMode.Camera && _expanded && IsVisible && _camera.IsLive;
+        CameraDot.Opacity = active ? 1 : 0.22;
+        CameraDot.Fill = _camera.IsLive ? GreenBrush : WaterBrush;
     }
 
     private void OnShelfItemsChanged()
@@ -589,6 +665,22 @@ public partial class IslandView : UserControl
             : Math.Clamp((progress - 0.18) / 0.82, 0, 1);
         CollapsedLayer.Opacity = _settings.Current.MinimalNotch ? 0 : Math.Clamp(1 - progress * 3, 0, 1);
 
+        var glowOpacity = ExpandedLayer.Opacity * 0.9;
+        if (glowOpacity > 0.01)
+        {
+            if (AmbientGlowHost.Visibility != Visibility.Visible)
+            {
+                AmbientGlowHost.Visibility = Visibility.Visible;
+            }
+
+            AmbientGlowHost.Opacity = glowOpacity;
+        }
+        else
+        {
+            AmbientGlowHost.Opacity = 0;
+            AmbientGlowHost.Visibility = Visibility.Collapsed;
+        }
+
         if (!widthSettled || !heightSettled)
         {
             return;
@@ -656,6 +748,8 @@ public partial class IslandView : UserControl
         {
             DateText.Text = char.ToUpper(date[0], CultureInfo.CurrentCulture) + date[1..];
         }
+
+        HeaderTimeText.Text = now.ToString("HH:mm", CultureInfo.CurrentCulture);
     }
 
     private void OnFocusTick()
@@ -687,6 +781,7 @@ public partial class IslandView : UserControl
         _wasFocusRunning = _focus.IsRunning;
         _lastFocusSecond = -1;
         SetClockText();
+        UpdateCompactVisual(animate: true);
     }
 
     private void OnFocusCompleted(FocusPhase phase)
@@ -699,6 +794,7 @@ public partial class IslandView : UserControl
         _lastActivity = DateTime.Now;
         UpdateTabVisuals();
         SetMode(PanelMode.Focus);
+        UpdateCompactVisual(animate: true);
 
         var label = phase == FocusPhase.Focus
             ? "Focus complete \u00B7 Take a break"
@@ -909,7 +1005,7 @@ public partial class IslandView : UserControl
 
     private void AnimateTabHighlight(PanelMode mode)
     {
-        var target = ModeIndex(mode) * 34.0;
+        var target = ModeIndex(mode) * 68.0;
         var animation = new DoubleAnimation(
             TabHighlightTransform.X,
             target,
@@ -923,7 +1019,7 @@ public partial class IslandView : UserControl
     private void SnapTabHighlight(PanelMode mode)
     {
         TabHighlightTransform.BeginAnimation(TranslateTransform.XProperty, null);
-        TabHighlightTransform.X = ModeIndex(mode) * 34;
+        TabHighlightTransform.X = ModeIndex(mode) * 68;
     }
 
     private void OnMusicTabChecked(object sender, RoutedEventArgs e)
@@ -1085,6 +1181,33 @@ public partial class IslandView : UserControl
         SettingsRequested?.Invoke();
     }
 
+    private void OnCollapseClick(object sender, RoutedEventArgs e)
+    {
+        _hoverSuppressed = true;
+        _lastActivity = DateTime.Now;
+        SetExpanded(false);
+    }
+
+    private void OnCompactClick(object sender, MouseButtonEventArgs e)
+    {
+        if (_expanded || _settings.Current.MinimalNotch)
+        {
+            return;
+        }
+
+        _hoverSuppressed = false;
+        _lastActivity = DateTime.Now;
+        Wake();
+
+        if (_snapshot is not null && !_focus.HasSession)
+        {
+            SetMode(PanelMode.Music, animate: false);
+        }
+
+        SetExpanded(true);
+        e.Handled = true;
+    }
+
     private void OnWaterReminderDue()
     {
         if (Dispatcher.CheckAccess())
@@ -1175,6 +1298,16 @@ public partial class IslandView : UserControl
 
         WaterCountText.Text = $"{count}/{goal}";
         WaterButton.Foreground = reached ? GreenBrush : WaterBrush;
+
+        var filled = goal > 0
+            ? (int)Math.Round(Math.Clamp(count / (double)goal, 0, 1) * _waterBars.Length)
+            : 0;
+        var fillBrush = reached ? GreenBrush : WaterBrush;
+        for (var i = 0; i < _waterBars.Length; i++)
+        {
+            _waterBars[i].Background = i < filled ? fillBrush : WaterTrackBrush;
+        }
+
         WaterButton.ToolTip = reached
             ? $"Goal reached \u00B7 {goal} glasses today"
             : $"{count} of {goal} glasses today \u00B7 click to log";
@@ -1189,6 +1322,15 @@ public partial class IslandView : UserControl
 
         if (_settings.Current.MinimalNotch)
         {
+            ClockText.Opacity = 0;
+            EyesCanvas.Opacity = 0;
+            return;
+        }
+
+        if (_compactMediaVisible)
+        {
+            _eyesShown = false;
+            _dozing = false;
             ClockText.Opacity = 0;
             EyesCanvas.Opacity = 0;
             return;
@@ -1303,7 +1445,7 @@ public partial class IslandView : UserControl
     {
         _blinkTimer.Stop();
 
-        if (_eyesShown && !_dozing && !_expanded)
+        if (_eyesShown && !_dozing && !_expanded && !_compactMediaVisible)
         {
             var blink = new DoubleAnimation(1, 0.08, TimeSpan.FromMilliseconds(65))
             {
@@ -1354,13 +1496,21 @@ public partial class IslandView : UserControl
             ArtBrush.ImageSource = null;
             ArtFallback.Visibility = Visibility.Visible;
             ArtGlyph.Visibility = Visibility.Visible;
+            CompactArtBrush.ImageSource = null;
+            CompactArtFallback.Visibility = Visibility.Visible;
+            CompactArtGlyph.Visibility = Visibility.Visible;
+            CompactTitleText.Text = string.Empty;
+            Vinyl.Opacity = 0;
+            SetVinyl(false);
+            Waveform.Seed = 0;
             PlayGlyph.Text = "\uE768";
             PrevButton.IsEnabled = false;
             PlayButton.IsEnabled = false;
             NextButton.IsEnabled = false;
             FooterSource.Text = string.Empty;
             PlayingDot.Opacity = 0;
-            MediaDot.Opacity = 0;
+            ApplyAccentColor(ArtworkAccent.Fallback);
+            UpdateCompactVisual(animate: true);
             return;
         }
 
@@ -1368,34 +1518,260 @@ public partial class IslandView : UserControl
         ArtistText.Text = string.IsNullOrWhiteSpace(snapshot.Artist)
             ? (string.IsNullOrWhiteSpace(snapshot.Album) ? "Unknown artist" : snapshot.Album)
             : snapshot.Artist;
+        CompactTitleText.Text = snapshot.Title;
 
         if (snapshot.Artwork is not null)
         {
             ArtBrush.ImageSource = snapshot.Artwork;
             ArtFallback.Visibility = Visibility.Collapsed;
             ArtGlyph.Visibility = Visibility.Collapsed;
+            CompactArtBrush.ImageSource = snapshot.Artwork;
+            CompactArtFallback.Visibility = Visibility.Collapsed;
+            CompactArtGlyph.Visibility = Visibility.Collapsed;
         }
         else
         {
             ArtBrush.ImageSource = null;
             ArtFallback.Visibility = Visibility.Visible;
             ArtGlyph.Visibility = Visibility.Visible;
+            CompactArtBrush.ImageSource = null;
+            CompactArtFallback.Visibility = Visibility.Visible;
+            CompactArtGlyph.Visibility = Visibility.Visible;
         }
 
+        Vinyl.Opacity = 1;
+        SetVinyl(snapshot.IsPlaying);
+        Waveform.Seed = StableHash($"{snapshot.Title}|{snapshot.Artist}|{snapshot.Album}");
         PlayGlyph.Text = snapshot.IsPlaying ? "\uE769" : "\uE768";
         PrevButton.IsEnabled = true;
         PlayButton.IsEnabled = true;
         NextButton.IsEnabled = true;
         FooterSource.Text = snapshot.SourceApp;
         PlayingDot.Opacity = snapshot.IsPlaying ? 1 : 0;
-        MediaDot.Opacity = snapshot.IsPlaying ? 1 : 0;
+
+        ApplyAccentColor(ArtworkAccent.Extract(snapshot.Artwork));
+        UpdateCompactVisual(animate: true);
+    }
+
+    private void UpdateCompactVisual(bool animate)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        var showMedia = _snapshot is not null &&
+                        !_settings.Current.MinimalNotch &&
+                        !_focus.ShowInPill;
+        var token = ++_compactAnimationToken;
+
+        CompactMedia.Visibility = Visibility.Visible;
+        CompactClock.Visibility = Visibility.Visible;
+
+        if (!animate || showMedia == _compactMediaVisible)
+        {
+            _compactMediaVisible = showMedia;
+            CompactMedia.BeginAnimation(OpacityProperty, null);
+            CompactClock.BeginAnimation(OpacityProperty, null);
+            CompactMedia.Opacity = showMedia && !_toastVisible ? 1 : 0;
+            CompactClock.Opacity = showMedia ? 0 : 1;
+            CompactMedia.Visibility = showMedia ? Visibility.Visible : Visibility.Collapsed;
+            CompactClock.Visibility = showMedia ? Visibility.Collapsed : Visibility.Visible;
+            UpdateEqualizerTimer();
+            UpdateIdleVisual();
+            return;
+        }
+
+        _compactMediaVisible = showMedia;
+        var duration = TimeSpan.FromMilliseconds(150);
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var fadeIn = showMedia ? CompactMedia : CompactClock;
+        var fadeOut = showMedia ? CompactClock : CompactMedia;
+
+        fadeIn.BeginAnimation(
+            OpacityProperty,
+            new DoubleAnimation(fadeIn.Opacity, 1, duration) { EasingFunction = ease });
+
+        var fadeOutAnimation = new DoubleAnimation(fadeOut.Opacity, 0, duration) { EasingFunction = ease };
+        fadeOutAnimation.Completed += (_, _) =>
+        {
+            if (token != _compactAnimationToken)
+            {
+                return;
+            }
+
+            fadeOut.BeginAnimation(OpacityProperty, null);
+            fadeOut.Opacity = 0;
+            fadeOut.Visibility = Visibility.Collapsed;
+        };
+        fadeOut.BeginAnimation(OpacityProperty, fadeOutAnimation);
+
+        UpdateEqualizerTimer();
+        UpdateIdleVisual();
+    }
+
+    private void UpdateEqualizerTimer()
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        var shouldRun = _compactMediaVisible &&
+                        !_expanded &&
+                        IsVisible &&
+                        !_settings.Current.MinimalNotch &&
+                        _snapshot?.IsPlaying == true;
+
+        if (shouldRun)
+        {
+            if (!_equalizerTimer.IsEnabled)
+            {
+                _equalizerTimer.Start();
+            }
+
+            return;
+        }
+
+        _equalizerTimer.Stop();
+        FreezeEqualizer();
+    }
+
+    private void FreezeEqualizer()
+    {
+        for (var i = 0; i < _eqBars.Length; i++)
+        {
+            _eqBars[i].BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            _eqBars[i].ScaleY = 0.3;
+            _eqLevels[i] = 0.3;
+        }
+    }
+
+    private void TickEqualizer()
+    {
+        if (!_compactMediaVisible || _snapshot?.IsPlaying != true)
+        {
+            _equalizerTimer.Stop();
+            FreezeEqualizer();
+            return;
+        }
+
+        for (var i = 0; i < _eqBars.Length; i++)
+        {
+            if (_random.NextDouble() < 0.2)
+            {
+                _eqTargets[i] = 0.3 + _random.NextDouble() * 0.7;
+            }
+
+            _eqLevels[i] += (_eqTargets[i] - _eqLevels[i]) * 0.55;
+            _eqBars[i].ScaleY = _eqLevels[i];
+        }
+    }
+
+    private void SetVinyl(bool playing)
+    {
+        if (_snapshot is null)
+        {
+            _vinylRunning = false;
+            VinylRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+            VinylRotate.Angle = 0;
+            Vinyl.Opacity = 0;
+            return;
+        }
+
+        if (playing && !_vinylRunning)
+        {
+            _vinylRunning = true;
+            var from = VinylRotate.Angle % 360;
+            VinylRotate.BeginAnimation(
+                RotateTransform.AngleProperty,
+                new DoubleAnimation(from, from + 360, TimeSpan.FromSeconds(11))
+                {
+                    RepeatBehavior = RepeatBehavior.Forever
+                });
+        }
+        else if (!playing && _vinylRunning)
+        {
+            _vinylRunning = false;
+            var angle = VinylRotate.Angle % 360;
+            VinylRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+            VinylRotate.Angle = angle;
+        }
+    }
+
+    private void ApplyAccentColor(Color color)
+    {
+        if (_accentApplied && color == _accentColor)
+        {
+            return;
+        }
+
+        _accentApplied = true;
+        _accentColor = color;
+        _accentBrush.Color = color;
+
+        PlayButton.Background = _accentBrush;
+        PlayButton.Foreground = PlayGlyphBrush;
+        if (PlayButton.Effect is DropShadowEffect shadow)
+        {
+            shadow.Color = color;
+        }
+
+        Waveform.PlayedBrush = _accentBrush;
+        CompactEqBar1.Background = _accentBrush;
+        CompactEqBar2.Background = _accentBrush;
+        CompactEqBar3.Background = _accentBrush;
+        CompactEqBar4.Background = _accentBrush;
+        CompactEqBar5.Background = _accentBrush;
+
+        ArtGlow.Fill = CreateGlowBrush(color, 76);
+        AmbientGlow.Fill = CreateGlowBrush(color, 92);
+    }
+
+    private static RadialGradientBrush CreateGlowBrush(Color color, byte centerAlpha)
+    {
+        var brush = new RadialGradientBrush
+        {
+            GradientOrigin = new Point(0.5, 0.5),
+            Center = new Point(0.5, 0.5),
+            RadiusX = 0.5,
+            RadiusY = 0.5
+        };
+        brush.GradientStops.Add(new GradientStop(
+            Color.FromArgb(centerAlpha, color.R, color.G, color.B), 0));
+        brush.GradientStops.Add(new GradientStop(
+            Color.FromArgb((byte)(centerAlpha * 0.32), color.R, color.G, color.B), 0.62));
+        brush.GradientStops.Add(new GradientStop(
+            Color.FromArgb(0, color.R, color.G, color.B), 1));
+        return brush;
+    }
+
+    private static int StableHash(string value)
+    {
+        unchecked
+        {
+            var hash = (int)2166136261;
+            foreach (var c in value)
+            {
+                hash ^= c;
+                hash *= 16777619;
+            }
+
+            return hash;
+        }
     }
 
     private void UpdateProgress()
     {
+        if (!_expanded)
+        {
+            return;
+        }
+
         if (_snapshot is null)
         {
-            ProgressFill.Width = 0;
+            Waveform.Progress = 0;
+            Waveform.Seed = 0;
             FooterText.Text = string.Empty;
             return;
         }
@@ -1406,12 +1782,7 @@ public partial class IslandView : UserControl
             ? Math.Clamp(position.TotalMilliseconds / duration.TotalMilliseconds, 0, 1)
             : 0;
 
-        var width = ProgressHit.ActualWidth;
-        if (width > 0)
-        {
-            ProgressFill.Width = width * ratio;
-        }
-
+        Waveform.Progress = ratio;
         FooterText.Text = duration > TimeSpan.Zero
             ? $"{FormatTime(position)} / {FormatTime(duration)}"
             : string.Empty;
@@ -1429,27 +1800,15 @@ public partial class IslandView : UserControl
             : value.ToString(@"m\:ss", CultureInfo.InvariantCulture);
     }
 
-    private void OnProgressSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        UpdateProgress();
-    }
-
-    private void OnProgressMouseDown(object sender, MouseButtonEventArgs e)
+    private void OnWaveformSeek(object sender, double ratio)
     {
         if (_snapshot is null || _snapshot.Duration <= TimeSpan.Zero)
         {
             return;
         }
 
-        var width = ProgressHit.ActualWidth;
-        if (width <= 0)
-        {
-            return;
-        }
-
-        var ratio = Math.Clamp(e.GetPosition(ProgressHit).X / width, 0, 1);
+        _lastActivity = DateTime.Now;
         _ = _media.SeekAsync(TimeSpan.FromTicks((long)(_snapshot.Duration.Ticks * ratio)));
-        e.Handled = true;
     }
 
     private void OnPlayPauseClick(object sender, RoutedEventArgs e)
@@ -1561,6 +1920,11 @@ public partial class IslandView : UserControl
         ClockText.Opacity = 0;
         EyesCanvas.Opacity = 0;
 
+        if (_compactMediaVisible)
+        {
+            Animate(CompactMedia, OpacityProperty, 0, 120);
+        }
+
         ToastGlyph.Text = glyph ?? string.Empty;
         ToastGlyph.Visibility = drop ? Visibility.Collapsed : Visibility.Visible;
         ToastDrop.Visibility = drop ? Visibility.Visible : Visibility.Collapsed;
@@ -1621,6 +1985,7 @@ public partial class IslandView : UserControl
             ToastBorder.BeginAnimation(OpacityProperty, null);
             ToastBorder.Opacity = 0;
             _toastVisible = false;
+            UpdateCompactVisual(animate: false);
             UpdateIdleVisual();
         };
         ToastBorder.BeginAnimation(OpacityProperty, fade);

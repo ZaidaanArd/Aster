@@ -27,6 +27,7 @@ public partial class LyricsView : UserControl
     private readonly List<LyricsLineVisual> _lineVisuals = new();
 
     private Brush _highlightBrush;
+    private Brush _underlineBrush;
     private string _highlightKey;
     private int _currentLine = -1;
     private bool _initialized;
@@ -43,7 +44,9 @@ public partial class LyricsView : UserControl
         _settings = settings;
 
         _highlightKey = settings.Current.LyricsHighlightColor;
-        _highlightBrush = CreateHighlightBrush(ResolveHighlightColor(_highlightKey));
+        var highlightColor = ResolveHighlightColor(_highlightKey);
+        _highlightBrush = CreateHighlightBrush(highlightColor);
+        _underlineBrush = CreateFrozenBrush(highlightColor);
 
         InitializeComponent();
         _uiFont = (FontFamily)FindResource("UiFont");
@@ -120,11 +123,14 @@ public partial class LyricsView : UserControl
         }
 
         _highlightKey = key;
-        _highlightBrush = CreateHighlightBrush(ResolveHighlightColor(key));
+        var color = ResolveHighlightColor(key);
+        _highlightBrush = CreateHighlightBrush(color);
+        _underlineBrush = CreateFrozenBrush(color);
 
         foreach (var visual in _lineVisuals)
         {
             visual.Highlight.Background = _highlightBrush;
+            visual.Underline.Background = _underlineBrush;
         }
     }
 
@@ -280,9 +286,23 @@ public partial class LyricsView : UserControl
             IsHitTestVisible = false
         };
 
+        var underline = new Border
+        {
+            Height = 1.5,
+            Background = _underlineBrush,
+            CornerRadius = new CornerRadius(1),
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Margin = new Thickness(9, 0, 9, 2),
+            RenderTransformOrigin = new Point(0, 0.5),
+            RenderTransform = new ScaleTransform(0, 1),
+            Opacity = 0,
+            IsHitTestVisible = false
+        };
+
         var content = new Grid();
         content.Children.Add(highlight);
         content.Children.Add(text);
+        content.Children.Add(underline);
 
         var border = new Border
         {
@@ -295,7 +315,7 @@ public partial class LyricsView : UserControl
         };
         border.MouseLeftButtonDown += OnLyricLineClick;
 
-        return new LyricsLineVisual(border, highlight, text);
+        return new LyricsLineVisual(border, highlight, underline, text);
     }
 
     private void OnLyricLineClick(object sender, MouseButtonEventArgs e)
@@ -317,12 +337,32 @@ public partial class LyricsView : UserControl
 
         var position = _media.EstimatedPosition;
         var index = FindLineIndex(document.Lines, position);
-        if (index == _currentLine)
+        if (index != _currentLine)
+        {
+            SetCurrentLine(index);
+        }
+
+        UpdateUnderlineProgress(document, index, position);
+    }
+
+    private void UpdateUnderlineProgress(LyricsDocument document, int index, TimeSpan position)
+    {
+        if (index < 0 || index >= _lineVisuals.Count || index >= document.Lines.Count)
         {
             return;
         }
 
-        SetCurrentLine(index);
+        var start = document.Lines[index].TimeSeconds;
+        var end = index + 1 < document.Lines.Count
+            ? document.Lines[index + 1].TimeSeconds
+            : start + 6;
+        var span = Math.Max(0.25, end - start);
+        var ratio = Math.Clamp((position.TotalSeconds - start) / span, 0, 1);
+
+        if (_lineVisuals[index].Underline.RenderTransform is ScaleTransform transform)
+        {
+            transform.ScaleX = ratio;
+        }
     }
 
     private void SetCurrentLine(int index)
@@ -353,6 +393,12 @@ public partial class LyricsView : UserControl
                         2 => 0.56,
                         _ => 0.36
                     };
+
+            visual.Underline.Opacity = active ? 1 : 0;
+            if (!active && visual.Underline.RenderTransform is ScaleTransform transform)
+            {
+                transform.ScaleX = 0;
+            }
 
             if (active)
             {
@@ -549,5 +595,6 @@ public partial class LyricsView : UserControl
     private sealed record LyricsLineVisual(
         Border Border,
         Border Highlight,
+        Border Underline,
         TextBlock Text);
 }

@@ -10,17 +10,22 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 
 - **Notch selalu di atas** — hitam, membulat, menempel di tepi atas, tidak muncul di taskbar/Alt+Tab.
 - **Hover untuk membuka** — animasi spring halus, konten muncul ke bawah.
-- **Jam + tanggal** — jam di pill, tanggal & status di panel.
-- **Tab Music / Camera / Shelf / Focus** — panel media, kamera, file shelf, dan focus timer; ukuran panel tetap 500×252.
-- **Transisi panel** — slide + fade halus saat pindah tab, highlight tab ikut bergeser.
-- **Inter + glass** — UI memakai font Inter; panel memakai frosted glass dengan rim light, noise halus,
-  dan soft shadow. Bisa dimatikan di **Settings → Appearance**.
+- **Compact pill dinamis** — 300×38; saat ada media menampilkan album art, judul, dan equalizer;
+  saat idle kembali ke jam/mascot. Klik pill untuk membuka.
+- **Jam + tanggal** — jam di compact pill; tanggal, jam, water bars, camera dot, Wi-Fi, dan baterai di header.
+- **Tab Music / Camera / Shelf / Focus** — dock berlabel dengan active pill; ukuran panel tetap 500×252.
+- **Transisi panel** — slide + fade halus saat pindah tab, highlight dock ikut bergeser.
+- **Inter + glass** — UI memakai font Inter; panel memakai frosted glass dengan specular highlight,
+  rim light, noise halus, ambient glow dari album art, dan soft shadow. Bisa dimatikan di
+  **Settings → Appearance**.
+- **Dynamic album accent** — play button, waveform, equalizer, dan ambient glow mengikuti warna
+  dominan album art (fallback `#F6A6C8`).
 - **Bouncy open/close** — spring hover sedikit overshoot sebelum settle; bisa dimatikan di Appearance.
 - **Lyrics di dalam Music** — tombol speech bubble membuka panel lirik (204px) di kanan; media
-  (260px) dan progress bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
+  (260px) dan waveform bergeser ke kiri dengan animasi morph/slide dari kanan, tanpa fade,
   tanpa tab terpisah dan tanpa kontrol start/pause ganda.
   Synced lyrics dari LRCLIB dengan baris aktif berupa pill warna yang bisa dikustom (default biru),
-  fade atas/bawah, distance dimming,
+  progress underline tipis di baris aktif, fade atas/bawah, distance dimming,
   auto-scroll halus, klik baris untuk seek, fallback plain lyrics, dan cache lokal.
 - **Camera** — tab kamera dengan preview live 16:9, mirror toggle, dan shutter. Foto
   full-resolution disimpan ke `Pictures\DynamicIsland\Camera`. Kamera hanya aktif selama
@@ -29,10 +34,11 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
   lalu drag keluar ke Explorer/Discord/email. Maksimal 8 item, session-only.
 - **Focus timer (Pomodoro)** — 25/5/15 (bisa diubah), start/pause/reset, progress, session counter,
   chime, dan saran short/long break setiap 4 sesi. Saat timer jalan, pill menampilkan sisa waktu.
-- **Water reminder** — toast droplet di pill sesuai interval, header counter `3/8`, klik untuk
-  mencatat gelas. Reminder berhenti saat goal tercapai dan ditahan saat island disembunyikan.
-- **Media player** — judul, artis, album art, progress, play/pause, previous, next, dan seek.
-  Mendukung Spotify, Apple Music, YouTube/Chrome/Edge/Firefox via Windows media session.
+- **Water reminder** — toast droplet di pill sesuai interval, header 8 water bars + counter `3/8`,
+  klik untuk mencatat gelas. Reminder berhenti saat goal tercapai dan ditahan saat island disembunyikan.
+- **Media player** — judul, artis, album art dengan vinyl yang berputar, stylized waveform progress,
+  play/pause accent, previous, next, dan seek. Mendukung Spotify, Apple Music,
+  YouTube/Chrome/Edge/Firefox via Windows media session.
 - **Volume overlay** — muncul otomatis saat volume berubah.
 - **Brightness overlay** — untuk layar laptop (WMI), update maksimal ~1,2 detik.
 - **Baterai & Wi-Fi** — ikon status, toast saat charger dicolok.
@@ -46,7 +52,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.8.0-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.9.0-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -58,32 +64,36 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 | Aksi | Hasil |
 |---|---|
 | Arahkan kursor ke pill | Panel terbuka |
+| Klik compact pill | Panel terbuka (now-playing atau jam) |
+| Klik chevron di dock | Panel menutup |
 | Jauhkan kursor | Panel menutup (delay ~0,3 detik) |
-| Klik ikon **Music** | Panel media player (dengan animasi geser) |
-| Klik ikon **Camera** | Panel kamera; kamera mulai otomatis saat panel terbuka |
+| Klik tab **Music** | Panel media player (dengan animasi geser) |
+| Klik tab **Camera** | Panel kamera; kamera mulai otomatis saat panel terbuka |
 | Klik **shutter** di tab Camera | Simpan foto full-resolution ke Pictures |
 | Toggle **Mirror** | Putar preview kamera kiri-kanan |
-| Klik ikon **Shelf** | File yang sedang disimpan sementara |
+| Klik tab **Shelf** | File yang sedang disimpan sementara |
 | Drag file ke island | Tambah file ke shelf; panel terbuka otomatis |
 | Drag card dari shelf keluar | Copy/attach file ke Explorer atau app lain |
 | Double-click card | Buka file dengan app default |
 | Klik **Clear** di Shelf | Kosongkan shelf |
-| Klik ikon **Focus** | Panel focus timer (dengan animasi geser) |
+| Klik tab **Focus** | Panel focus timer (dengan animasi geser) |
 | Klik ikon **speech bubble** di Music | Buka/tutup panel lirik; media bergeser ke kiri |
 | Klik baris lirik | Seek ke timestamp baris tersebut |
-| Klik droplet `3/8` di header | Catat satu gelas air |
+| Klik 8 water bars / `3/8` di header | Catat satu gelas air |
 | Klik toast water reminder | Catat satu gelas air |
 | Klik ikon **gear** | Buka settings |
-| Klik progress bar | Seek ke posisi tersebut |
+| Klik waveform | Seek ke posisi tersebut |
 | Klik ikon tray | Buka menu pengaturan |
 | Klik dua kali ikon tray | Sembunyikan/tampilkan island |
 
 ### Appearance
 
-- **Glass background** — panel frosted transparan dengan gradient, rim light, noise, dan shadow.
-  Matikan untuk kembali ke hitam solid.
+- **Glass background** — panel frosted transparan dengan gradient, specular highlight, rim light,
+  noise, ambient glow dari album art, dan shadow. Matikan untuk kembali ke hitam solid.
 - **Bouncy open/close** — border island sedikit overshoot saat membuka/menutup. Konten tetap diam;
   lirik tetap smooth.
+- **Dynamic accent** — warna play button, waveform, equalizer compact, dan ambient glow mengikuti
+  album art. Lirik tetap memakai warna highlight pilihanmu.
 - Font UI memakai **Inter** (Regular + SemiBold). Ikon tetap Segoe Fluent Icons.
 
 ### Focus timer
@@ -189,14 +199,16 @@ set `DOTNET_ROOT` ke folder tersebut sebelum menjalankan build Debug.
 src/DynamicIsland/
 ├─ App.xaml(.cs)              startup, single instance, service wiring
 ├─ MainWindow.xaml(.cs)       window topmost/transparent, posisi, hit-test, tray commands
-├─ Controls/IslandView.*      notch, animasi, jam, mascot, media UI, toast, tab bar
+├─ Controls/IslandView.*      notch, animasi, compact now-playing, header, dock, media UI, toast
+├─ Controls/WaveformScrubber.cs stylized waveform + seek
 ├─ Controls/FocusView.*       UI focus timer (chips, countdown, progress, kontrol)
 ├─ Controls/CameraView.*      tab kamera (preview, mirror, shutter, status)
 ├─ Controls/ShelfView.*       file shelf (cards, drag-out, empty state, clear)
-├─ Controls/LyricsView.*      pane lirik (header, status, refresh, highlight, auto-scroll)
+├─ Controls/LyricsView.*      pane lirik (header, status, refresh, highlight, underline, auto-scroll)
 ├─ SettingsWindow.*           settings window dark (general, appearance, lyrics, focus, water, data)
 ├─ Services/
 │  ├─ MediaService.cs         WinRT GSMTC: now playing, artwork, kontrol
+│  ├─ ArtworkAccent.cs        sampling warna dominan album art
 │  ├─ LyricsService.cs        LRCLIB: fetch, parse LRC, cache, cancellation
 │  ├─ FocusService.cs         Pomodoro: phase, countdown, session counter, break suggestion
 │  ├─ CameraService.cs        WinRT MediaCapture: preview frames, mirror, full-res photo
@@ -220,6 +232,11 @@ src/DynamicIsland/
 - **Memori** sekitar 250–320 MB untuk build self-contained (WPF + WinRT + runtime .NET). Nusa yang native Rust jauh lebih kecil.
 - **Brightness** hanya untuk layar internal laptop. Monitor eksternal butuh DDC/CI (belum diimplementasikan).
 - **Metadata media** tergantung aplikasi. Spotify/YouTube/Apple Music berjalan baik; app DRM tertentu tidak mengekspos metadata.
+- **Waveform** bersifat stylized: Windows media session tidak memberi sample audio, jadi tinggi bar
+  dibuat deterministik dari judul/artis, bukan dari gelombang suara asli. Waveform audio asli butuh
+  WASAPI loopback + FFT.
+- **Album accent** diambil dari warna dominan artwork; cover grayscale atau sangat gelap memakai
+  fallback `#F6A6C8`.
 - **Lyrics** tergantung ketersediaan di LRCLIB; beberapa track tidak punya lirik atau server bisa sedang sibuk. Tombol refresh tersedia.
 - **Fullscreen exclusive** tidak bisa ditimpa; island akan disembunyikan.
 - **Focus timer** belum persist kalau app ditutup atau PC sleep; timer dihitung wall-clock.

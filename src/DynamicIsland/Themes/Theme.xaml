@@ -21,6 +21,17 @@
         <GradientStop Color="#14FFFFFF" Offset="0" />
         <GradientStop Color="#00FFFFFF" Offset="1" />
     </LinearGradientBrush>
+    <RadialGradientBrush x:Key="GlassSpecularBrush"
+                         GradientOrigin="0.3,0.05"
+                         Center="0.3,0.05"
+                         RadiusX="0.72"
+                         RadiusY="0.95">
+        <GradientStop Color="#2EFFFFFF" Offset="0" />
+        <GradientStop Color="#0FFFFFFF" Offset="0.42" />
+        <GradientStop Color="#00FFFFFF" Offset="1" />
+    </RadialGradientBrush>
+    <SolidColorBrush x:Key="DockSurface" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="DockStroke" Color="#14FFFFFF" />
     <SolidColorBrush x:Key="IslandStroke" Color="#2AFFFFFF" />
     <SolidColorBrush x:Key="TextPrimary" Color="#F5F5F7" />
     <SolidColorBrush x:Key="TextSecondary" Color="#94949C" />
@@ -88,15 +99,17 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="18">
+                    <Grid>
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="18" />
+                        <Border x:Name="Hover" Background="#00000000" CornerRadius="18" />
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="#E4E4E8" />
+                            <Setter TargetName="Hover" Property="Background" Value="#22000000" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="#C9C9CF" />
+                            <Setter TargetName="Hover" Property="Background" Value="#38000000" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.3" />
@@ -121,12 +134,14 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Focusable" Value="False" />
-        <Setter Property="Width" Value="30" />
+        <Setter Property="Width" Value="64" />
         <Setter Property="Height" Value="24" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="12">
+                    <Border x:Name="Bg"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="12">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
