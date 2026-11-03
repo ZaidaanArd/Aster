@@ -49,14 +49,16 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 - **Mascot** — jam memudar, mata muncul saat idle, berkedip, dan tertidur.
 - **Minimal notch** — mode garis tipis.
 - **Auto-hide saat fullscreen** — game/video fullscreen tidak terganggu (bisa dimatikan).
-- **Settings window** — dark theme, bisa diakses dari tray atau ikon gear di panel.
+- **Settings window** — sidebar dengan halaman General, Appearance, Lyrics, Focus, Water, dan About;
+  card layout, live lyric-color preview, water progress, dan scrollbar tipis. Bisa diakses dari tray
+  atau ikon gear di panel.
 - **Tray menu** — show/hide, settings, start with Windows, minimal notch, mascot, hide in fullscreen, about, exit.
 - **Ringan saat idle** — sekitar 0,3–1,5% CPU (satu core) saat tidak ada animasi.
 
 ## Menjalankan
 
 Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.9.4-win-x64.zip`.
+Versi ZIP: `dist\DynamicIsland-0.9.5-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 

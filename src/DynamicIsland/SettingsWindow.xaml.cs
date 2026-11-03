@@ -10,10 +10,15 @@ namespace DynamicIsland;
 
 public partial class SettingsWindow : Window
 {
+    private static readonly Brush WaterFillBrush = new SolidColorBrush(Color.FromRgb(0x7F, 0xB8, 0xFF));
+    private static readonly Brush WaterDoneBrush = new SolidColorBrush(Color.FromRgb(0x32, 0xD7, 0x4B));
+    private static readonly Brush WaterTrackBrush = new SolidColorBrush(Color.FromArgb(0x2E, 0xFF, 0xFF, 0xFF));
+
     private readonly SettingsService _settings;
     private readonly LyricsService _lyrics;
     private readonly WaterService _water;
     private readonly MainWindow _mainWindow;
+    private readonly Border[] _waterBars;
     private bool _loading;
 
     public SettingsWindow(
@@ -29,14 +34,22 @@ public partial class SettingsWindow : Window
         _mainWindow = mainWindow;
 
         InitializeComponent();
+
+        _waterBars = new[]
+        {
+            WaterSettingsBar1, WaterSettingsBar2, WaterSettingsBar3, WaterSettingsBar4,
+            WaterSettingsBar5, WaterSettingsBar6, WaterSettingsBar7, WaterSettingsBar8
+        };
+
         PositionBelowIsland(islandHeight);
         LoadFromSettings();
+        ShowPage("General");
 
         _water.StateChanged += OnWaterStateChanged;
         Closed += OnSettingsWindowClosed;
 
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
-        VersionText.Text = $"Dynamic Island {version?.ToString(3) ?? "0.9.4"}";
+        VersionText.Text = $"v{version?.ToString(3) ?? "0.9.5"}";
         DataPathText.Text = _settings.FilePath;
     }
 
@@ -45,10 +58,13 @@ public partial class SettingsWindow : Window
         var workArea = SystemParameters.WorkArea;
         const double gap = 8;
 
+        Width = Math.Min(Width, Math.Max(620, workArea.Width - 24));
+        Height = Math.Min(Height, Math.Max(440, workArea.Height - islandHeight - gap - 16));
+
         var top = islandHeight + gap;
         if (top + Height > workArea.Bottom)
         {
-            top = workArea.Bottom - Height;
+            top = Math.Max(workArea.Top, workArea.Bottom - Height);
         }
 
         if (top < workArea.Top)
@@ -209,6 +225,23 @@ public partial class SettingsWindow : Window
     private void UpdateLyricsColorPreview(Color color)
     {
         LyricsColorPreview.Background = new SolidColorBrush(color);
+        LyricsColorPreviewLine.Background = CreatePreviewHighlight(color);
+    }
+
+    private static Brush CreatePreviewHighlight(Color color)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Color.FromArgb(0x34, color.R, color.G, color.B), 0),
+                new GradientStop(Color.FromArgb(0x18, color.R, color.G, color.B), 1)
+            }
+        };
+        brush.Freeze();
+        return brush;
     }
 
     private void UpdateLyricsColorSwatches(string hex)
@@ -376,6 +409,62 @@ public partial class SettingsWindow : Window
         }
 
         WaterStatusText.Text = text;
+
+        var filled = goal > 0
+            ? (int)Math.Round(Math.Clamp(count / (double)goal, 0, 1) * _waterBars.Length)
+            : 0;
+        var fillBrush = _water.GoalReached ? WaterDoneBrush : WaterFillBrush;
+        for (var i = 0; i < _waterBars.Length; i++)
+        {
+            _waterBars[i].Background = i < filled ? fillBrush : WaterTrackBrush;
+        }
+    }
+
+    private void OnNavChecked(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded || sender is not RadioButton { Tag: string page })
+        {
+            return;
+        }
+
+        ShowPage(page);
+    }
+
+    private void OnSettingsLoaded(object sender, RoutedEventArgs e)
+    {
+        NavGeneral.IsChecked = true;
+        ShowPage("General");
+    }
+
+    private void ShowPage(string page)
+    {
+        GeneralPage.Visibility = page == "General" ? Visibility.Visible : Visibility.Collapsed;
+        AppearancePage.Visibility = page == "Appearance" ? Visibility.Visible : Visibility.Collapsed;
+        LyricsPage.Visibility = page == "Lyrics" ? Visibility.Visible : Visibility.Collapsed;
+        FocusPage.Visibility = page == "Focus" ? Visibility.Visible : Visibility.Collapsed;
+        WaterPage.Visibility = page == "Water" ? Visibility.Visible : Visibility.Collapsed;
+        AboutPage.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
+
+        (PageTitle.Text, PageSubtitle.Text) = page switch
+        {
+            "Appearance" => ("Appearance", "Glass, motion, and island behavior."),
+            "Lyrics" => ("Lyrics", "Source, highlight color, and local cache."),
+            "Focus" => ("Focus", "Session lengths and completion sound."),
+            "Water" => ("Water", "Reminders, active hours, and daily goal."),
+            "About" => ("About", "Data, credits, and app information."),
+            _ => ("General", "Startup and fullscreen behavior.")
+        };
+
+        var target = page switch
+        {
+            "Appearance" => AppearancePage,
+            "Lyrics" => LyricsPage,
+            "Focus" => FocusPage,
+            "Water" => WaterPage,
+            "About" => AboutPage,
+            _ => GeneralPage
+        };
+        target.ScrollToTop();
     }
 
     private void OnSettingsWindowClosed(object? sender, EventArgs e)
