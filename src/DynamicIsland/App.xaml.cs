@@ -25,7 +25,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        _mutex = new Mutex(true, "DynamicIsland.SingleInstance", out var createdNew);
+        _mutex = new Mutex(true, "Aster.SingleInstance", out var createdNew);
         _ownsMutex = createdNew;
         if (!createdNew)
         {
@@ -34,6 +34,7 @@ public partial class App : Application
         }
 
         _settings = new SettingsService();
+        StartupService.Migrate();
         _settings.Current.StartWithWindows = StartupService.IsEnabled();
 
         _media = new MediaService();

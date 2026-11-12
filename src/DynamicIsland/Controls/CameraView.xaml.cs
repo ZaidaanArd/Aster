@@ -402,7 +402,7 @@ public partial class CameraView : UserControl
         {
             var directory = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-                "DynamicIsland",
+                "Aster",
                 "Camera");
             Directory.CreateDirectory(directory);
 

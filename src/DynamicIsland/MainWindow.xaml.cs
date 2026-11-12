@@ -308,13 +308,13 @@ public partial class MainWindow : Window
     public void ShowAbout()
     {
         var version = typeof(MainWindow).Assembly.GetName().Version;
-        var versionText = version is null ? "0.1.0" : version.ToString(3);
+        var versionText = version is null ? "0.10.0" : version.ToString(3);
 
         MessageBox.Show(
-            $"Dynamic Island for Windows\nVersion {versionText}\n\n" +
-            "A small notch for the top of your screen.\n" +
-            "Media controls, clock, battery, Wi-Fi, volume and brightness.",
-            "About Dynamic Island",
+            $"Aster for Windows\nVersion {versionText}\n\n" +
+            "A tiny island for your desktop.\n" +
+            "Media, focus, water, camera, files, and status at the top of your screen.",
+            "About Aster",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
     }

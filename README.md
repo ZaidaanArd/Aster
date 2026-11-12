@@ -1,6 +1,6 @@
-# Dynamic Island for Windows
+# Aster
 
-Notch kecil di tengah atas layar Windows, terinspirasi dari [Nusa](https://rama2555.github.io/nusa/).
+A tiny island for your desktop. Notch kecil di tengah atas layar Windows, terinspirasi dari [Nusa](https://rama2555.github.io/nusa/).
 Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6)
@@ -31,7 +31,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
   fade atas/bawah, distance dimming,
   auto-scroll halus, klik baris untuk seek, fallback plain lyrics, dan cache lokal.
 - **Camera** — tab kamera dengan preview live 16:9, mirror toggle, dan shutter. Foto
-  full-resolution disimpan ke `Pictures\DynamicIsland\Camera`. Kamera hanya aktif selama
+  full-resolution disimpan ke `Pictures\Aster\Camera`. Kamera hanya aktif selama
   tab Camera terbuka dan island expanded.
 - **File shelf** — drag file dari Explorer ke island, simpan sementara sebagai referensi path,
   lalu drag keluar ke Explorer/Discord/email. Maksimal 8 item, session-only.
@@ -57,8 +57,8 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
 
 ## Menjalankan
 
-Versi siap pakai ada di `dist\DynamicIsland.exe` (self-contained, tidak perlu install .NET).
-Versi ZIP: `dist\DynamicIsland-0.9.5-win-x64.zip`.
+Versi siap pakai ada di `dist\Aster.exe` (self-contained, tidak perlu install .NET).
+Versi ZIP: `dist\Aster-0.10.0-win-x64.zip`.
 Double-click, lalu cari ikonnya di system tray (mungkin masuk ke overflow `^` — klik panah itu,
 lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
 
@@ -117,7 +117,7 @@ lalu drag ikonnya ke taskbar kalau mau selalu terlihat).
   hide, atau fullscreen akan mematikan kamera.
 - Preview **16:9** dengan mirror default. Toggle **Mirror** kalau tidak ingin dibalik.
 - Tombol **shutter** menyimpan foto full-resolution ke
-  `Pictures\DynamicIsland\Camera\camera-YYYYMMDD-HHmmss.jpg`.
+  `Pictures\Aster\Camera\camera-YYYYMMDD-HHmmss.jpg`.
   Foto disimpan **tidak mirror** (orientasi asli), walau preview dibalik.
 - Kalau ada lebih dari satu kamera, tombol **Switch camera** muncul.
 - Tidak memakai mikrofon, tidak merekam video, dan tidak upload apa pun.
@@ -174,6 +174,9 @@ Pengaturan disimpan di:
 %LOCALAPPDATA%\DynamicIsland\settings.json
 ```
 
+Path ini sengaja dipertahankan dari versi sebelumnya supaya setting lama tetap terbaca.
+Nama produk dan file yang kamu jalankan adalah **Aster**.
+
 ## Build dari source
 
 Prasyarat: Windows 10 1809+ / Windows 11, [.NET SDK 8](https://dotnet.microsoft.com/download/dotnet/8.0).
@@ -200,6 +203,9 @@ Jika SDK dipasang per-user (tanpa admin) di `%LOCALAPPDATA%\Microsoft\dotnet`,
 set `DOTNET_ROOT` ke folder tersebut sebelum menjalankan build Debug.
 
 ## Struktur
+
+Folder source, namespace, dan nama project internal tetap `DynamicIsland` untuk kompatibilitas.
+Nama produk, assembly, dan exe adalah **Aster**.
 
 ```
 src/DynamicIsland/

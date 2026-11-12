@@ -25,7 +25,7 @@ public sealed class TrayService : IDisposable
         var menu = new Forms.ContextMenuStrip();
         menu.Opening += (_, _) => Refresh();
 
-        _showHideItem = new Forms.ToolStripMenuItem("Hide island");
+        _showHideItem = new Forms.ToolStripMenuItem("Hide Aster");
         _showHideItem.Click += (_, _) =>
         {
             _window.ToggleVisibility();
@@ -69,7 +69,7 @@ public sealed class TrayService : IDisposable
         settingsItem.Click += (_, _) => _window.ShowSettings();
         menu.Items.Add(settingsItem);
 
-        var aboutItem = new Forms.ToolStripMenuItem("About Dynamic Island");
+        var aboutItem = new Forms.ToolStripMenuItem("About Aster");
         aboutItem.Click += (_, _) => _window.ShowAbout();
         menu.Items.Add(aboutItem);
 
@@ -81,7 +81,7 @@ public sealed class TrayService : IDisposable
         _notifyIcon = new Forms.NotifyIcon
         {
             Icon = _icon,
-            Text = "Dynamic Island",
+            Text = "Aster",
             ContextMenuStrip = menu,
             Visible = true
         };
@@ -115,7 +115,7 @@ public sealed class TrayService : IDisposable
 
     private void Refresh()
     {
-        _showHideItem.Text = _window.IslandVisible ? "Hide island" : "Show island";
+        _showHideItem.Text = _window.IslandVisible ? "Hide Aster" : "Show Aster";
         _startWithWindowsItem.Checked = _settings.Current.StartWithWindows;
         _minimalItem.Checked = _settings.Current.MinimalNotch;
         _mascotItem.Checked = _settings.Current.ShowMascot;

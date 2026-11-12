@@ -1,7 +1,7 @@
 <Window x:Class="DynamicIsland.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Dynamic Island Settings"
+        Title="Aster Settings"
         Width="740"
         Height="580"
         WindowStyle="None"
@@ -64,9 +64,9 @@
             BorderThickness="1">
         <Border.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
-                <GradientStop Color="#F515151B" Offset="0" />
-                <GradientStop Color="#F40C0C11" Offset="0.58" />
-                <GradientStop Color="#F507070A" Offset="1" />
+                <GradientStop Color="#FF15151B" Offset="0" />
+                <GradientStop Color="#FF0C0C11" Offset="0.58" />
+                <GradientStop Color="#FF07070A" Offset="1" />
             </LinearGradientBrush>
         </Border.Background>
         <Border.Effect>
@@ -102,7 +102,7 @@
                                  HorizontalAlignment="Center"
                                  VerticalAlignment="Center" />
                     </Border>
-                    <TextBlock Text="Dynamic Island"
+                    <TextBlock Text="Aster"
                                FontFamily="{StaticResource UiFont}"
                                FontSize="13.5"
                                FontWeight="SemiBold"
@@ -310,7 +310,7 @@
                                                   Unchecked="OnToggleChanged">
                                             <StackPanel>
                                                 <TextBlock Text="Start with Windows" Style="{StaticResource SettingsLabel}" />
-                                                <TextBlock Text="Launch Dynamic Island automatically when you sign in." Style="{StaticResource SettingsDescription}" />
+                                                <TextBlock Text="Launch Aster automatically when you sign in." Style="{StaticResource SettingsDescription}" />
                                             </StackPanel>
                                         </CheckBox>
                                     </StackPanel>
@@ -769,7 +769,7 @@
                                 <Border Style="{StaticResource SettingsCard}">
                                     <StackPanel>
                                         <TextBlock Text="ABOUT" Style="{StaticResource SettingsCardTitle}" />
-                                        <TextBlock Text="Dynamic Island for Windows"
+                                        <TextBlock Text="Aster for Windows"
                                                    FontFamily="{StaticResource UiFont}"
                                                    FontSize="17"
                                                    FontWeight="SemiBold"
@@ -779,7 +779,7 @@
                                                    FontSize="10.5"
                                                    LineHeight="17"
                                                    Margin="0,6,0,0"
-                                                   Text="Notch, media, camera, file shelf, lyrics, focus timer, water reminder, battery, Wi-Fi, volume and brightness.&#10;&#10;Built with C# / WPF (.NET 8). Inspired by Nusa." />
+                                                   Text="A tiny island for your desktop.&#10;&#10;Notch, media, camera, file shelf, lyrics, focus timer, water reminder, battery, Wi-Fi, volume, and brightness. Built with C# / WPF (.NET 8). Inspired by Nusa." />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

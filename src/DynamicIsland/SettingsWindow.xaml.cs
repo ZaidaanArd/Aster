@@ -49,7 +49,7 @@ public partial class SettingsWindow : Window
         Closed += OnSettingsWindowClosed;
 
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
-        VersionText.Text = $"v{version?.ToString(3) ?? "0.9.5"}";
+        VersionText.Text = $"v{version?.ToString(3) ?? "0.10.0"}";
         DataPathText.Text = _settings.FilePath;
     }
 
@@ -487,7 +487,7 @@ public partial class SettingsWindow : Window
         MessageBox.Show(
             this,
             "Lyrics cache cleared. The next song will be fetched from LRCLIB again.",
-            "Dynamic Island",
+            "Aster",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
     }
