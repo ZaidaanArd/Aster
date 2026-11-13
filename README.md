@@ -9,7 +9,7 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)**.
 ## Preview
 
 <p align="center">
-  <img src="docs/aster-preview.png" alt="Aster expanded - Focus timer" width="860" />
+  <img src="docs/aster-preview.png" alt="Aster expanded - Music" width="860" />
 </p>
 
 <p align="center">
