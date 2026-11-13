@@ -6,6 +6,16 @@ Dibuat dari nol dengan **C# / WPF (.NET 8)**.
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6)
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)
 
+## Preview
+
+<p align="center">
+  <img src="docs/aster-preview.png" alt="Aster expanded - Focus timer" width="860" />
+</p>
+
+<p align="center">
+  <img src="docs/aster-settings.png" alt="Aster Settings - General" width="720" />
+</p>
+
 ## Fitur
 
 - **Notch selalu di atas** — hitam, membulat, menempel di tepi atas, tidak muncul di taskbar/Alt+Tab.
