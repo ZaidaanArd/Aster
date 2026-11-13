@@ -779,7 +779,7 @@
                                                    FontSize="10.5"
                                                    LineHeight="17"
                                                    Margin="0,6,0,0"
-                                                   Text="A tiny island for your desktop.&#10;&#10;Notch, media, camera, file shelf, lyrics, focus timer, water reminder, battery, Wi-Fi, volume, and brightness. Built with C# / WPF (.NET 8). Inspired by Nusa." />
+                                                   Text="A tiny island for your desktop.&#10;&#10;Notch, media, camera, file shelf, lyrics, focus timer, water reminder, battery, Wi-Fi, volume, and brightness. Built with C# / WPF (.NET 8)." />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
