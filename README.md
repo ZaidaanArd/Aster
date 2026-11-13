@@ -1,7 +1,7 @@
 # Aster
 
-A tiny island for your desktop. Notch kecil di tengah atas layar Windows, terinspirasi dari [Nusa](https://rama2555.github.io/nusa/).
-Dibuat dari nol dengan **C# / WPF (.NET 8)** — bukan salinan kode Nusa.
+A tiny island for your desktop. Notch kecil di tengah atas layar Windows.
+Dibuat dari nol dengan **C# / WPF (.NET 8)**.
 
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6)
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)
@@ -240,8 +240,7 @@ src/DynamicIsland/
 
 ## Keterbatasan
 
-- **Bukan open-source Nusa.** Nusa memakai Rust dan tidak membuka source-nya; proyek ini implementasi independen.
-- **Memori** sekitar 250–320 MB untuk build self-contained (WPF + WinRT + runtime .NET). Nusa yang native Rust jauh lebih kecil.
+- **Memori** sekitar 250–320 MB untuk build self-contained (WPF + WinRT + runtime .NET).
 - **Brightness** hanya untuk layar internal laptop. Monitor eksternal butuh DDC/CI (belum diimplementasikan).
 - **Metadata media** tergantung aplikasi. Spotify/YouTube/Apple Music berjalan baik; app DRM tertentu tidak mengekspos metadata.
 - **Waveform** bersifat stylized: Windows media session tidak memberi sample audio, jadi tinggi bar
@@ -269,7 +268,7 @@ src/DynamicIsland/
 
 ## Roadmap
 
-Fitur Nusa yang belum ada di versi ini: to-do dengan reminder.
+Fitur yang belum ada di versi ini: to-do dengan reminder.
 
 ## Lisensi
 
