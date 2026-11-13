@@ -8,6 +8,7 @@
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
+        ShowActivated="False"
         CanResize="False"
         WindowStartupLocation="Manual">
   <Grid Background="Transparent">

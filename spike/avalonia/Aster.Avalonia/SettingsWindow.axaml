@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Aster.Avalonia.SettingsWindow"
+        Title="Aster Lab Avalonia - Settings"
+        Width="360" Height="190"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#0A0A0D">
+  <StackPanel Margin="24" Spacing="10">
+    <TextBlock Text="Aster Lab Avalonia"
+               FontSize="18"
+               Foreground="#F5F4F0" />
+    <TextBlock Text="Phase 0 spike settings placeholder."
+               Foreground="#A0A0A8" />
+    <TextBlock Text="Package: dev.asterlab.avalonia"
+               Foreground="#A0A0A8" />
+    <Button Content="Close"
+            HorizontalAlignment="Right"
+            Click="OnCloseClick" />
+  </StackPanel>
+</Window>
