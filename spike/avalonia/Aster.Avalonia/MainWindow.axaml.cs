@@ -121,6 +121,14 @@ public partial class MainWindow : Window
 
         _settings = new SettingsWindow();
         _settings.Closed += (_, _) => _settings = null;
-        _settings.Show(this);
+        if (IsVisible)
+        {
+            _settings.Show(this);
+        }
+        else
+        {
+            // Showing an owned window requires a visible owner.
+            _settings.Show();
+        }
     }
 }
