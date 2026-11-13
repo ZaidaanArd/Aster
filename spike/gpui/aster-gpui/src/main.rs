@@ -1,3 +1,5 @@
+mod platform;
+
 use std::time::Instant;
 
 use gpui::{
@@ -58,14 +60,46 @@ fn main() {
                 ..Default::default()
             },
             |window, cx| {
+                #[cfg(target_os = "windows")]
+                platform::windows::install(&*window, window.scale_factor());
+                #[cfg(not(target_os = "windows"))]
                 let _ = window;
                 cx.new(|_| Hud)
             },
         )
         .expect("open GPUI window");
 
+        #[cfg(target_os = "windows")]
+        setup_tray();
+
         if let Ok(path) = std::env::var("ASTER_READY_FILE") {
             let _ = std::fs::write(path, started.elapsed().as_millis().to_string());
         }
     });
+}
+
+#[cfg(target_os = "windows")]
+fn setup_tray() {
+    use tray_icon::Icon;
+    use tray_icon::TrayIconBuilder;
+    use tray_icon::menu::{Menu, MenuItem};
+
+    let menu = Menu::new();
+    menu.append(&MenuItem::new("Show/Hide", true, None))
+        .expect("menu item");
+    menu.append(&MenuItem::new("Quit", true, None))
+        .expect("menu item");
+
+    let icon_path = concat!(env!("CARGO_MANIFEST_DIR"), "/assets/tray.ico");
+    let icon = Icon::from_path(icon_path, None).expect("tray icon");
+    let tray = TrayIconBuilder::new()
+        .with_menu(Box::new(menu))
+        .with_tooltip("Aster Lab GPUI")
+        .with_icon(icon)
+        .build()
+        .expect("tray icon");
+
+    // The tray must live for the process lifetime; GPUI's event loop has no
+    // place to store it in this spike.
+    std::mem::forget(tray);
 }
