@@ -35,6 +35,17 @@ public sealed class WindowsWindowPlacement
         return dpi == 0 ? 96u : dpi;
     }
 
+    public bool IsCursorInside(IntPtr hwnd)
+    {
+        if (!GetCursorPos(out var point) || !GetWindowRect(hwnd, out var rect))
+        {
+            return false;
+        }
+
+        return point.X >= rect.Left && point.X < rect.Right &&
+               point.Y >= rect.Top && point.Y < rect.Bottom;
+    }
+
     public void SetBounds(IntPtr hwnd, int x, int y, int width, int height)
     {
         if (!SetWindowPos(hwnd, IntPtr.Zero, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE))

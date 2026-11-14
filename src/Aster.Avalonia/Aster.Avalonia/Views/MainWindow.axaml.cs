@@ -1,8 +1,12 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Aster.Avalonia.Composition;
 using Aster.Avalonia.Platform;
+using Aster.Avalonia.Services;
+using Aster.Avalonia.ViewModels;
 using Aster.Core.Logic;
+using Aster.Core.Settings;
 using Aster.Platform.Windows;
 using Aster.Platform.Windows.Window;
 
@@ -12,24 +16,37 @@ public partial class MainWindow : Window
 {
     public static Stopwatch StartupClock { get; } = Stopwatch.StartNew();
 
+    private readonly FileAppLog _log;
+    private readonly JsonSettingsStore _settings;
+    private readonly ShellViewModel _state;
+    private readonly WindowMotionController _motion;
     private readonly WindowsWindowPlacement _placement;
-    private SettingsWindow? _settings;
+    private SettingsWindow? _settingsWindow;
 
     public MainWindow()
     {
         InitializeComponent();
-        var log = new FileAppLog(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AsterLab", "Avalonia", "logs", "app.log"));
-        _placement = new WindowsWindowPlacement(log);
+
+        var composition = new CompositionRoot();
+        _log = composition.Log;
+        _settings = composition.Settings;
+        _placement = composition.Placement;
+
+        _state = new ShellViewModel();
+        DataContext = _state;
+        _motion = new WindowMotionController(this, _state, _placement, _settings, _log);
 
         WindowsHud.Attach(this);
-        Opened += (_, _) =>
+        Opened += async (_, _) =>
         {
+            await _settings.LoadAsync();
             PositionAtTopCenter();
             WriteReadyFile();
+            _motion.Start();
         };
     }
+
+    public WindowMotionController Motion => _motion;
 
     private void PositionAtTopCenter()
     {
@@ -60,21 +77,21 @@ public partial class MainWindow : Window
 
     public void ShowSettings()
     {
-        if (_settings is { IsVisible: true })
+        if (_settingsWindow is { IsVisible: true })
         {
-            _settings.Activate();
+            _settingsWindow.Activate();
             return;
         }
 
-        _settings = new SettingsWindow();
-        _settings.Closed += (_, _) => _settings = null;
+        _settingsWindow = new SettingsWindow();
+        _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         if (IsVisible)
         {
-            _settings.Show(this);
+            _settingsWindow.Show(this);
         }
         else
         {
-            _settings.Show();
+            _settingsWindow.Show();
         }
     }
 }

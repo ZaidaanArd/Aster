@@ -1,6 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Aster.Avalonia.ViewModels"
         x:Class="Aster.Avalonia.Views.MainWindow"
+        x:DataType="vm:ShellViewModel"
         Title="Aster Lab Avalonia"
         Width="300" Height="38"
         WindowDecorations="None"
@@ -14,15 +16,24 @@
   <Border x:Name="Island"
           CornerRadius="0,0,22,22"
           Background="#F2070708"
+          BoxShadow="inset 0 0 12 0 #66000000"
           ClipToBounds="False">
-    <Grid>
-      <TextBlock x:Name="ClockText"
-                 Text="--:--"
-                 Foreground="#F5F4F0"
-                 FontSize="15"
-                 FontWeight="SemiBold"
-                 HorizontalAlignment="Center"
-                 VerticalAlignment="Center" />
+    <Grid IsVisible="{Binding !IsMinimal}">
+      <Grid x:Name="CollapsedLayer" Opacity="{Binding CollapsedOpacity}">
+        <TextBlock Text="{Binding ClockText}"
+                   Foreground="#F5F4F0"
+                   FontSize="15"
+                   FontWeight="SemiBold"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+      </Grid>
+      <Grid x:Name="ExpandedLayer" Opacity="{Binding ExpandedOpacity}">
+        <TextBlock Text="Expanded"
+                   Foreground="#F5F4F0"
+                   FontSize="18"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+      </Grid>
     </Grid>
   </Border>
 </Window>
