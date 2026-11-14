@@ -28,6 +28,8 @@ public partial class MediaViewModel : ObservableObject
     [ObservableProperty] private string _durationText = "0:00";
     [ObservableProperty] private Bitmap? _artworkImage;
 
+    public bool IsSeeking { get; set; }
+
     public MediaViewModel(IMediaSession media, IUiDispatcher dispatcher, IAppLog log)
     {
         _media = media;
@@ -88,6 +90,11 @@ public partial class MediaViewModel : ObservableObject
 
     private void UpdateProgress(MediaSnapshot snapshot)
     {
+        if (IsSeeking)
+        {
+            return;
+        }
+
         var position = _media.EstimatedPosition(DateTimeOffset.Now);
         PositionSeconds = Math.Max(0, position.TotalSeconds);
         PositionText = Format(position);

@@ -12,7 +12,9 @@ public sealed class SmtcMediaSession : IMediaSession, IDisposable
     private readonly CancellationTokenSource _cts = new();
     private MediaSnapshot _current = MediaSnapshot.Empty;
     private GlobalSystemMediaTransportControlsSessionManager? _manager;
-    private string _artKey = string.Empty;
+    private string _artTrackKey = string.Empty;
+    private string _artMissKey = string.Empty;
+    private DateTimeOffset _artRetryAt = DateTimeOffset.MinValue;
     private byte[]? _artBytes;
     private bool _started;
     private bool _sessionSubscribed;
@@ -175,13 +177,34 @@ public sealed class SmtcMediaSession : IMediaSession, IDisposable
             _ => PlaybackState.None
         };
 
-        var artKey = $"{properties.Title}|{properties.Artist}|{properties.AlbumTitle}";
-        if (!string.Equals(artKey, _artKey, StringComparison.Ordinal))
+        var source = FriendlySource(session.SourceAppUserModelId);
+        var trackKey = $"{properties.Title}|{properties.Artist}|{properties.AlbumTitle}|{source}";
+        if (!string.Equals(trackKey, _artTrackKey, StringComparison.Ordinal))
         {
-            _artKey = artKey;
-            _artBytes = await ArtworkReader.ReadAsync(properties.Thumbnail);
+            _artTrackKey = trackKey;
+            _artBytes = null;
+            _artMissKey = string.Empty;
+            _artRetryAt = DateTimeOffset.MinValue;
         }
 
+        var now = DateTimeOffset.UtcNow;
+        if (_artBytes is null &&
+            (!string.Equals(trackKey, _artMissKey, StringComparison.Ordinal) || now >= _artRetryAt))
+        {
+            var bytes = await ArtworkReader.ReadAsync(properties.Thumbnail);
+            if (bytes is not null)
+            {
+                _artBytes = bytes;
+                _artMissKey = string.Empty;
+            }
+            else
+            {
+                _artMissKey = trackKey;
+                _artRetryAt = now.AddSeconds(2);
+            }
+        }
+
+        var artKey = _artBytes is null ? trackKey + "|none" : trackKey;
         var duration = timeline.EndTime > TimeSpan.Zero ? timeline.EndTime : TimeSpan.Zero;
         var snapshot = new MediaSnapshot(
             string.IsNullOrWhiteSpace(properties.Title) ? "Unknown track" : properties.Title.Trim(),
@@ -192,7 +215,7 @@ public sealed class SmtcMediaSession : IMediaSession, IDisposable
             state,
             MediaProgress.ClampSeek(timeline.Position, duration),
             duration,
-            FriendlySource(session.SourceAppUserModelId),
+            source,
             DateTimeOffset.Now);
 
         Publish(snapshot);

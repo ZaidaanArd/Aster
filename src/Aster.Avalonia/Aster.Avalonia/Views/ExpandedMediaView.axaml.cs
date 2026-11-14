@@ -18,11 +18,20 @@ public partial class ExpandedMediaView : UserControl
     private void OnCloseClick(object? sender, RoutedEventArgs e) =>
         CloseRequested?.Invoke(this, EventArgs.Empty);
 
+    private void OnSeekPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is ShellViewModel { Media: not null } vm)
+        {
+            vm.Media.IsSeeking = true;
+        }
+    }
+
     private void OnSeekReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (DataContext is ShellViewModel { Media: not null } vm)
         {
-            vm.Media.SeekCommand.Execute(vm.Media.PositionSeconds);
+            vm.Media.IsSeeking = false;
+            vm.Media.SeekCommand.Execute(SeekSlider.Value);
         }
     }
 }

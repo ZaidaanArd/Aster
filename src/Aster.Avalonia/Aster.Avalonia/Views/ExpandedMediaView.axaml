@@ -45,6 +45,7 @@
                 Minimum="0"
                 Maximum="{Binding Media.DurationSeconds}"
                 Value="{Binding Media.PositionSeconds, Mode=TwoWay}"
+                PointerPressed="OnSeekPressed"
                 PointerReleased="OnSeekReleased" />
         <Grid ColumnDefinitions="*,Auto">
           <TextBlock Text="{Binding Media.PositionText}" Foreground="#7A7A84" FontSize="10" />
