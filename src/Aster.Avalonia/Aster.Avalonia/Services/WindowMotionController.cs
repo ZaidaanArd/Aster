@@ -138,9 +138,8 @@ public sealed class WindowMotionController : IDisposable
         else if (!inside)
         {
             _hoverSuppressed = false;
-            if (_expanded)
+            if (_expanded && !_collapseTimer.IsEnabled)
             {
-                _collapseTimer.Stop();
                 _collapseTimer.Start();
             }
         }
