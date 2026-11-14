@@ -39,6 +39,22 @@ public class JsonSettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task MissingFieldsUseDefaults()
+    {
+        var json = """{"schemaVersion":1,"minimalNotch":true}""";
+        await File.WriteAllTextAsync(PathToSettings, json);
+        var store = new JsonSettingsStore(PathToSettings, _log);
+
+        await store.LoadAsync();
+
+        Assert.True(store.Current.MinimalNotch);
+        Assert.True(store.Current.HideInFullscreen);
+        Assert.True(store.Current.GlassBackground);
+        Assert.True(store.Current.BouncySpring);
+        Assert.False(store.Current.StartWithWindows);
+    }
+
+    [Fact]
     public async Task CorruptFileFallsBackToDefaultsAndIsBackedUp()
     {
         await File.WriteAllTextAsync(PathToSettings, "{ not json");

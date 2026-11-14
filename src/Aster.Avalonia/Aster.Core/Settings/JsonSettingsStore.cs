@@ -35,6 +35,8 @@ public sealed class JsonSettingsStore : ISettingsStore
             }
 
             var json = await File.ReadAllTextAsync(_path, ct);
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
             var loaded = JsonSerializer.Deserialize(json, SettingsJsonContext.Default.AppSettings);
 
             if (loaded is null)
@@ -56,7 +58,15 @@ public sealed class JsonSettingsStore : ISettingsStore
                 return;
             }
 
-            Current = loaded with { SchemaVersion = SettingsSchema.CurrentVersion };
+            Current = loaded with
+            {
+                SchemaVersion = SettingsSchema.CurrentVersion,
+                StartWithWindows = ReadBool(root, "startWithWindows", SettingsSchema.Default.StartWithWindows),
+                MinimalNotch = ReadBool(root, "minimalNotch", SettingsSchema.Default.MinimalNotch),
+                HideInFullscreen = ReadBool(root, "hideInFullscreen", SettingsSchema.Default.HideInFullscreen),
+                GlassBackground = ReadBool(root, "glassBackground", SettingsSchema.Default.GlassBackground),
+                BouncySpring = ReadBool(root, "bouncySpring", SettingsSchema.Default.BouncySpring)
+            };
             CanSave = true;
             LoadWarning = null;
         }
@@ -119,6 +129,18 @@ public sealed class JsonSettingsStore : ISettingsStore
         }
 
         Changed?.Invoke(this, settings);
+    }
+
+    private static bool ReadBool(JsonElement root, string name, bool fallback)
+    {
+        if (root.ValueKind == JsonValueKind.Object &&
+            root.TryGetProperty(name, out var value) &&
+            value.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            return value.GetBoolean();
+        }
+
+        return fallback;
     }
 
     private void BackupCorrupt(string suffix = "")
