@@ -22,6 +22,7 @@ public partial class ShellViewModel : ObservableObject
     [ObservableProperty] private bool _isMinimal;
     [ObservableProperty] private string _batteryText = "";
     [ObservableProperty] private bool _isWifiConnected;
+    [ObservableProperty] private bool _glassBackground = true;
 
     public ShellViewModel(
         IBatteryStatus? battery = null,
@@ -77,6 +78,12 @@ public partial class ShellViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(WifiText));
         OnPropertyChanged(nameof(WifiOpacity));
+    }
+
+    public void ApplySettings(AppSettings settings)
+    {
+        IsMinimal = settings.MinimalNotch;
+        GlassBackground = settings.GlassBackground;
     }
 
     private void OnBatteryChanged(object? sender, BatterySnapshot snapshot) => ApplyBattery(snapshot);

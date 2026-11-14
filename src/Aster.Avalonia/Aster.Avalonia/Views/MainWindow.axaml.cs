@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Aster.Avalonia.Composition;
 using Aster.Avalonia.Platform;
@@ -19,6 +20,19 @@ namespace Aster.Avalonia.Views;
 
 public partial class MainWindow : Window
 {
+    private static readonly IBrush GlassBrush = new LinearGradientBrush
+    {
+        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+        EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
+        GradientStops =
+        {
+            new GradientStop(Color.Parse("#DE14141B"), 0),
+            new GradientStop(Color.Parse("#F007070A"), 1)
+        }
+    };
+
+    private static readonly IBrush SolidBrush = new SolidColorBrush(Color.Parse("#F2070708"));
+
     public static Stopwatch StartupClock { get; } = Stopwatch.StartNew();
 
     private readonly FileAppLog _log;
@@ -114,6 +128,8 @@ public partial class MainWindow : Window
         {
             await _settings.LoadAsync();
             _settingsViewModel = new SettingsViewModel(_settings, _log);
+            _settingsViewModel.Saved += (_, settings) => ApplySettings(settings);
+            ApplySettings(_settings.Current);
             if (Environment.GetCommandLineArgs().Contains("--settings"))
             {
                 ShowSettings();
@@ -190,6 +206,39 @@ public partial class MainWindow : Window
 
         _placement.ShowNoActivate(handle.Handle);
         PositionAtTopCenter();
+    }
+
+    private void ApplySettings(AppSettings settings)
+    {
+        _state.ApplySettings(settings);
+        Island.Background = settings.GlassBackground ? GlassBrush : SolidBrush;
+        GlassNoise.IsVisible = settings.GlassBackground;
+        _motion.ApplySettings();
+
+        if (!_autostart.SetEnabled(settings.StartWithWindows))
+        {
+            _log.Warn("Autostart update failed while applying settings.");
+            if (_settingsViewModel is not null)
+            {
+                _settingsViewModel.StartWithWindows = _autostart.IsEnabled;
+            }
+        }
+
+        _tray?.SetAutostartChecked(settings.StartWithWindows);
+
+        if (!settings.HideInFullscreen && _fullscreenHidden)
+        {
+            _fullscreenHidden = false;
+            if (!_userHidden)
+            {
+                ShowNoActivate();
+            }
+        }
+        else if (settings.HideInFullscreen && _fullscreen.IsFullscreen && !_userHidden && !_fullscreenHidden)
+        {
+            _fullscreenHidden = true;
+            Hide();
+        }
     }
 
     public void ShowSettings()

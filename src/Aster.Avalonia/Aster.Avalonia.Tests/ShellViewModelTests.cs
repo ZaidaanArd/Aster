@@ -1,4 +1,5 @@
 using Aster.Avalonia.ViewModels;
+using Aster.Core.Models;
 
 namespace Aster.Avalonia.Tests;
 
@@ -34,5 +35,16 @@ public class ShellViewModelTests
         vm.ExpansionProgress = 1;
         Assert.Equal(0, vm.CollapsedOpacity);
         Assert.Equal(1, vm.ExpandedOpacity);
+    }
+
+    [Fact]
+    public void ApplySettingsUpdatesMinimalAndGlass()
+    {
+        var vm = new ShellViewModel();
+
+        vm.ApplySettings(new AppSettings(1, false, true, true, false, true));
+
+        Assert.True(vm.IsMinimal);
+        Assert.False(vm.GlassBackground);
     }
 }
