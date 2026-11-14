@@ -53,11 +53,7 @@
         </Grid>
       </Grid>
       <Grid x:Name="ExpandedLayer" Opacity="{Binding ExpandedOpacity}">
-        <TextBlock Text="Expanded"
-                   Foreground="#F5F4F0"
-                   FontSize="18"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
+        <views:ExpandedMediaView x:Name="ExpandedMedia" />
       </Grid>
     </Grid>
   </Border>

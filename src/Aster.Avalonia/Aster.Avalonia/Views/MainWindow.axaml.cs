@@ -58,6 +58,12 @@ public partial class MainWindow : Window
         _clockTimer.Tick += (_, _) => _state.UpdateClock(DateTimeOffset.Now);
         _clockTimer.Start();
         _motion = new WindowMotionController(this, _state, _placement, _settings, _log);
+        ExpandedMedia.SettingsRequested += (_, _) => ShowSettings();
+        ExpandedMedia.CloseRequested += (_, _) =>
+        {
+            _motion.SuppressHover();
+            _motion.SetExpanded(false);
+        };
 
         _autostart = new RegistryAutostart(_log);
         var commands = new TrayCommandHandler(

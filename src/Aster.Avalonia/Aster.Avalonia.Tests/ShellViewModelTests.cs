@@ -14,6 +14,15 @@ public class ShellViewModelTests
     }
 
     [Fact]
+    public void DateUsesCurrentCulture()
+    {
+        var vm = new ShellViewModel();
+        vm.UpdateClock(new DateTimeOffset(2026, 11, 14, 14, 5, 0, TimeSpan.Zero));
+
+        Assert.False(string.IsNullOrWhiteSpace(vm.DateText));
+    }
+
+    [Fact]
     public void OpacityTracksExpansionProgress()
     {
         var vm = new ShellViewModel();

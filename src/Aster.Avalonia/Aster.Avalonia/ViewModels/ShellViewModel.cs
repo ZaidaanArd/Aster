@@ -18,6 +18,7 @@ public partial class ShellViewModel : ObservableObject
     [ObservableProperty] private bool _isExpanded;
     [ObservableProperty] private double _expansionProgress;
     [ObservableProperty] private string _clockText = "--:--";
+    [ObservableProperty] private string _dateText = string.Empty;
     [ObservableProperty] private bool _isMinimal;
     [ObservableProperty] private string _batteryText = "";
     [ObservableProperty] private bool _isWifiConnected;
@@ -92,6 +93,12 @@ public partial class ShellViewModel : ObservableObject
         BatteryText = snapshot.IsCharging ? $"{snapshot.Percent}%+" : $"{snapshot.Percent}%";
     }
 
-    public void UpdateClock(DateTimeOffset now) =>
+    public void UpdateClock(DateTimeOffset now)
+    {
         ClockText = now.ToString("HH:mm", CultureInfo.CurrentCulture);
+        var date = now.ToString("ddd, d MMM", CultureInfo.CurrentCulture);
+        DateText = date.Length > 0
+            ? char.ToUpper(date[0], CultureInfo.CurrentCulture) + date[1..]
+            : date;
+    }
 }
