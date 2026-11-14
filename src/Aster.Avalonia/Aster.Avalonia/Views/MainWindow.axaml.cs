@@ -11,6 +11,7 @@ using Aster.Core.Logic;
 using Aster.Core.Models;
 using Aster.Core.Settings;
 using Aster.Platform.Windows;
+using Aster.Platform.Windows.Media;
 using Aster.Platform.Windows.System;
 using Aster.Platform.Windows.Window;
 
@@ -30,6 +31,8 @@ public partial class MainWindow : Window
     private readonly WindowsFullscreenWatcher _fullscreen;
     private readonly WindowsBatteryStatus _battery;
     private readonly WindowsNetworkStatus _network;
+    private readonly SmtcMediaSession _mediaSession;
+    private readonly MediaViewModel _media;
     private readonly DispatcherTimer _clockTimer;
     private SettingsWindow? _settingsWindow;
     private bool _userHidden;
@@ -47,7 +50,9 @@ public partial class MainWindow : Window
         var dispatcher = new AvaloniaUiDispatcher();
         _battery = new WindowsBatteryStatus(dispatcher, _log);
         _network = new WindowsNetworkStatus(dispatcher, _log);
-        _state = new ShellViewModel(_battery, _network);
+        _mediaSession = new SmtcMediaSession(dispatcher, _log);
+        _media = new MediaViewModel(_mediaSession, dispatcher, _log);
+        _state = new ShellViewModel(_battery, _network, _media);
         DataContext = _state;
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => _state.UpdateClock(DateTimeOffset.Now);
@@ -104,6 +109,7 @@ public partial class MainWindow : Window
             PositionAtTopCenter();
             WriteReadyFile();
             _motion.Start();
+            _mediaSession.Start();
         };
     }
 

@@ -9,6 +9,11 @@ public partial class ShellViewModel : ObservableObject
 {
     private readonly IBatteryStatus? _battery;
     private readonly INetworkStatus? _network;
+    private readonly MediaViewModel? _media;
+
+    public MediaViewModel? Media => _media;
+    public bool HasMedia => _media?.HasSession == true;
+    public bool HasNoMedia => !HasMedia;
 
     [ObservableProperty] private bool _isExpanded;
     [ObservableProperty] private double _expansionProgress;
@@ -17,10 +22,14 @@ public partial class ShellViewModel : ObservableObject
     [ObservableProperty] private string _batteryText = "";
     [ObservableProperty] private bool _isWifiConnected;
 
-    public ShellViewModel(IBatteryStatus? battery = null, INetworkStatus? network = null)
+    public ShellViewModel(
+        IBatteryStatus? battery = null,
+        INetworkStatus? network = null,
+        MediaViewModel? media = null)
     {
         _battery = battery;
         _network = network;
+        _media = media;
 
         if (_battery is not null)
         {
@@ -32,6 +41,18 @@ public partial class ShellViewModel : ObservableObject
         {
             _network.Changed += OnNetworkChanged;
             IsWifiConnected = _network.IsConnected;
+        }
+
+        if (_media is not null)
+        {
+            _media.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(MediaViewModel.HasSession))
+                {
+                    OnPropertyChanged(nameof(HasMedia));
+                    OnPropertyChanged(nameof(HasNoMedia));
+                }
+            };
         }
     }
 
