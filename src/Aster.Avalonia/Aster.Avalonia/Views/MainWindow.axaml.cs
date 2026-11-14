@@ -28,6 +28,9 @@ public partial class MainWindow : Window
     private readonly RegistryAutostart _autostart;
     private readonly TrayService? _tray;
     private readonly WindowsFullscreenWatcher _fullscreen;
+    private readonly WindowsBatteryStatus _battery;
+    private readonly WindowsNetworkStatus _network;
+    private readonly DispatcherTimer _clockTimer;
     private SettingsWindow? _settingsWindow;
     private bool _userHidden;
     private bool _fullscreenHidden;
@@ -41,8 +44,14 @@ public partial class MainWindow : Window
         _settings = composition.Settings;
         _placement = composition.Placement;
 
-        _state = new ShellViewModel();
+        var dispatcher = new AvaloniaUiDispatcher();
+        _battery = new WindowsBatteryStatus(dispatcher, _log);
+        _network = new WindowsNetworkStatus(dispatcher, _log);
+        _state = new ShellViewModel(_battery, _network);
         DataContext = _state;
+        _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _clockTimer.Tick += (_, _) => _state.UpdateClock(DateTimeOffset.Now);
+        _clockTimer.Start();
         _motion = new WindowMotionController(this, _state, _placement, _settings, _log);
 
         _autostart = new RegistryAutostart(_log);

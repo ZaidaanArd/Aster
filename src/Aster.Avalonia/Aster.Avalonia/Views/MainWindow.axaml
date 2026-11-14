@@ -20,12 +20,25 @@
           ClipToBounds="False">
     <Grid IsVisible="{Binding !IsMinimal}">
       <Grid x:Name="CollapsedLayer" Opacity="{Binding CollapsedOpacity}">
-        <TextBlock Text="{Binding ClockText}"
-                   Foreground="#F5F4F0"
-                   FontSize="15"
-                   FontWeight="SemiBold"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
+        <Grid ColumnDefinitions="*,Auto" Margin="14,0">
+          <TextBlock Text="{Binding ClockText}"
+                     Foreground="#F5F4F0"
+                     FontSize="15"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1"
+                      Orientation="Horizontal"
+                      Spacing="8"
+                      VerticalAlignment="Center">
+            <TextBlock Text="{Binding BatteryText}"
+                       Foreground="#B8B8C0"
+                       FontSize="11" />
+            <TextBlock Text="{Binding WifiText}"
+                       Foreground="#B8B8C0"
+                       FontSize="11"
+                       Opacity="{Binding WifiOpacity}" />
+          </StackPanel>
+        </Grid>
       </Grid>
       <Grid x:Name="ExpandedLayer" Opacity="{Binding ExpandedOpacity}">
         <TextBlock Text="Expanded"
