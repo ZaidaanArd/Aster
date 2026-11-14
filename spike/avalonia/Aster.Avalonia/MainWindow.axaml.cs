@@ -25,14 +25,7 @@ public partial class MainWindow : Window
 
         if (OperatingSystem.IsWindows())
         {
-            WindowsHud.Attach(
-                this,
-                point => HitTest.IsInteractive(
-                    point.X,
-                    point.Y,
-                    Bounds.Width,
-                    Bounds.Height,
-                    RenderScaling));
+            WindowsHud.Attach(this);
         }
 
         try

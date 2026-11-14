@@ -4,20 +4,23 @@ using Avalonia.Controls;
 namespace Aster.Avalonia.Platform;
 
 /// <summary>
-/// Applies the Win32 window styles and message handling that turn the host window
-/// into a click-through, non-activating HUD. No-ops outside Windows.
+/// Applies the Win32 window styles that keep the island window out of the
+/// taskbar and prevent it from taking activation when clicked.
+///
+/// The island is its own top-level window, sized to the visible pill. There is
+/// no full-size transparent host window, so clicks outside the pill land on the
+/// application behind it without any hit-test forwarding. Expansion (the
+/// future panel) resizes this window; a separate click-through effect layer can
+/// be added later for glow/shadow.
 /// </summary>
 internal static class WindowsHud
 {
-    private const uint WM_NCHITTEST = 0x0084;
     private const uint WM_MOUSEACTIVATE = 0x0021;
-    private const int HTTRANSPARENT = -1;
-    private const int HTCLIENT = 1;
     private const int MA_NOACTIVATE = 3;
     private const uint WS_EX_NOACTIVATE = 0x08000000;
     private const uint WS_EX_TOOLWINDOW = 0x00000080;
 
-    public static void Attach(Window window, Func<PixelPoint, bool> isInteractive)
+    public static void Attach(Window window)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -29,25 +32,10 @@ internal static class WindowsHud
 
         Win32Properties.AddWndProcHookCallback(window, (IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, ref bool handled) =>
         {
-            switch (msg)
+            if (msg == WM_MOUSEACTIVATE)
             {
-                case WM_MOUSEACTIVATE:
-                    handled = true;
-                    return new IntPtr(MA_NOACTIVATE);
-
-                case WM_NCHITTEST:
-                    var screenPoint = new PixelPoint(
-                        unchecked((short)(lParam.ToInt64() & 0xFFFF)),
-                        unchecked((short)((lParam.ToInt64() >> 16) & 0xFFFF)));
-                    var clientPoint = window.PointToClient(screenPoint);
-                    var scaling = window.RenderScaling;
-                    var clientPixels = new PixelPoint(
-                        (int)Math.Round(clientPoint.X * scaling),
-                        (int)Math.Round(clientPoint.Y * scaling));
-                    handled = true;
-                    return isInteractive(clientPixels)
-                        ? new IntPtr(HTCLIENT)
-                        : new IntPtr(HTTRANSPARENT);
+                handled = true;
+                return new IntPtr(MA_NOACTIVATE);
             }
 
             return IntPtr.Zero;
