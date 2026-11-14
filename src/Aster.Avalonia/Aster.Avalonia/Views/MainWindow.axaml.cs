@@ -35,6 +35,7 @@ public partial class MainWindow : Window
     private readonly MediaViewModel _media;
     private readonly DispatcherTimer _clockTimer;
     private SettingsWindow? _settingsWindow;
+    private SettingsViewModel? _settingsViewModel;
     private bool _userHidden;
     private bool _fullscreenHidden;
 
@@ -112,6 +113,12 @@ public partial class MainWindow : Window
         Opened += async (_, _) =>
         {
             await _settings.LoadAsync();
+            _settingsViewModel = new SettingsViewModel(_settings, _log);
+            if (Environment.GetCommandLineArgs().Contains("--settings"))
+            {
+                ShowSettings();
+            }
+
             PositionAtTopCenter();
             WriteReadyFile();
             _motion.Start();
@@ -187,13 +194,29 @@ public partial class MainWindow : Window
 
     public void ShowSettings()
     {
+        if (_settingsViewModel is null)
+        {
+            return;
+        }
+
         if (_settingsWindow is { IsVisible: true })
         {
             _settingsWindow.Activate();
             return;
         }
 
-        _settingsWindow = new SettingsWindow();
+        _settingsWindow = new SettingsWindow(_settingsViewModel);
+        var screen = Screens.Primary;
+        if (screen is not null)
+        {
+            var width = (int)Math.Round(_settingsWindow.Width * screen.Scaling);
+            var height = (int)Math.Round(_settingsWindow.Height * screen.Scaling);
+            var x = screen.Bounds.X + (screen.Bounds.Width - width) / 2;
+            var y = screen.Bounds.Y + (int)Math.Round((WindowGeometry.ExpandedHeight + 8) * screen.Scaling);
+            var maxY = screen.WorkingArea.Bottom - height;
+            _settingsWindow.Position = new PixelPoint(x, Math.Min(y, maxY));
+        }
+
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         if (IsVisible)
         {
