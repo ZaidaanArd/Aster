@@ -8,7 +8,7 @@
         Title="Aster Lab Avalonia - Settings"
         Width="740" Height="580"
         CanResize="False"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="Manual"
         KeyDown="OnKeyDown"
         Background="#F2070708">
   <Grid RowDefinitions="Auto,*,Auto" Margin="28">
