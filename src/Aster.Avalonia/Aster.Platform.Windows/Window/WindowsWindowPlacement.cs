@@ -14,7 +14,7 @@ public sealed class WindowsWindowPlacement
     public MonitorRect GetPrimaryMonitorRect()
     {
         var monitor = MonitorFromPoint(new POINT { X = 0, Y = 0 }, MONITOR_DEFAULTTOPRIMARY);
-        var info = new MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>() };
+        var info = new MONITORINFO { cbSize = global::System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>() };
 
         if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref info))
         {
