@@ -88,6 +88,14 @@ public sealed class WindowMotionController : IDisposable
 
     public void SuppressHover() => _hoverSuppressed = true;
 
+    public void Reapply()
+    {
+        if (_hwnd != IntPtr.Zero)
+        {
+            ApplySize(force: true);
+        }
+    }
+
     public void ApplySettings()
     {
         if (_settings.Current.MinimalNotch && _expanded)

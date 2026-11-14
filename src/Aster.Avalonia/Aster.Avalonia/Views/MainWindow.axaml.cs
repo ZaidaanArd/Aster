@@ -52,6 +52,8 @@ public partial class MainWindow : Window
     private SettingsViewModel? _settingsViewModel;
     private bool _userHidden;
     private bool _fullscreenHidden;
+    private bool _initialized;
+    private bool _openSettingsWhenReady;
 
     public MainWindow()
     {
@@ -73,6 +75,11 @@ public partial class MainWindow : Window
         _clockTimer.Tick += (_, _) => _state.UpdateClock(DateTimeOffset.Now);
         _clockTimer.Start();
         _motion = new WindowMotionController(this, _state, _placement, _settings, _log);
+        Screens.Changed += (_, _) =>
+        {
+            PositionAtTopCenter();
+            _motion.Reapply();
+        };
         ExpandedMedia.SettingsRequested += (_, _) => ShowSettings();
         ExpandedMedia.CloseRequested += (_, _) =>
         {
@@ -117,7 +124,7 @@ public partial class MainWindow : Window
         {
             _log.Error("Tray creation failed.", ex);
             _tray = null;
-            Dispatcher.UIThread.Post(ShowSettings);
+            _openSettingsWhenReady = true;
         }
 
         _fullscreen = new WindowsFullscreenWatcher(new AvaloniaUiDispatcher(), _log);
@@ -126,12 +133,25 @@ public partial class MainWindow : Window
         WindowsHud.Attach(this);
         Opened += async (_, _) =>
         {
+            if (_initialized)
+            {
+                return;
+            }
+
+            _initialized = true;
+            _log.Info("Aster Lab Avalonia started.");
             await _settings.LoadAsync();
             _settingsViewModel = new SettingsViewModel(_settings, _log);
             _settingsViewModel.Saved += (_, settings) => ApplySettings(settings);
             ApplySettings(_settings.Current);
             if (Environment.GetCommandLineArgs().Contains("--settings"))
             {
+                ShowSettings();
+            }
+
+            if (_openSettingsWhenReady)
+            {
+                _openSettingsWhenReady = false;
                 ShowSettings();
             }
 
@@ -198,13 +218,11 @@ public partial class MainWindow : Window
 
     private void ShowNoActivate()
     {
-        var handle = TryGetPlatformHandle();
-        if (handle is null)
+        if (!IsVisible)
         {
-            return;
+            Show();
         }
 
-        _placement.ShowNoActivate(handle.Handle);
         PositionAtTopCenter();
     }
 
