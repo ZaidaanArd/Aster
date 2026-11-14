@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Aster.Avalonia.Views.SettingsWindow"
+        Title="Aster Lab Avalonia - Settings"
+        Width="740" Height="580"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#F2070708">
+  <StackPanel Margin="24" Spacing="16">
+    <TextBlock Text="Aster Lab Avalonia" FontSize="20" Foreground="#F5F4F0" />
+    <TextBlock Text="Settings placeholder for Phase 1a." Foreground="#A0A0A8" />
+    <Button Content="Close" HorizontalAlignment="Right" Click="OnCloseClick" />
+  </StackPanel>
+</Window>

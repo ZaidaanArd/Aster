@@ -13,13 +13,16 @@
         WindowStartupLocation="Manual">
   <Border x:Name="Island"
           CornerRadius="0,0,22,22"
-          Background="#F2070708">
-    <TextBlock x:Name="ClockText"
-               Text="--:--"
-               Foreground="#F5F4F0"
-               FontSize="15"
-               FontWeight="SemiBold"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center" />
+          Background="#F2070708"
+          ClipToBounds="False">
+    <Grid>
+      <TextBlock x:Name="ClockText"
+                 Text="--:--"
+                 Foreground="#F5F4F0"
+                 FontSize="15"
+                 FontWeight="SemiBold"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center" />
+    </Grid>
   </Border>
 </Window>
