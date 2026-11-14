@@ -51,14 +51,20 @@ for ($i = 1; $i -le $Runs; $i++) {
         [math]::Round((($cpuEnd - $cpuStart) / $idleClock.Elapsed.TotalSeconds) * 100, 2)
     } else { 0 }
 
+    $binaryFolderMb = [math]::Round(
+        (Get-ChildItem (Split-Path -Parent $ExePath) -File | Measure-Object Length -Sum).Sum / 1MB, 1)
+
     $rows += [pscustomobject]@{
-        Label        = $Label
-        Run          = $i
-        Ready        = $ready
-        StartupMs    = $startupMs
-        WorkingSetMB = [math]::Round($proc.WorkingSet64 / 1MB, 1)
-        CpuPercent   = $cpuPercent
-        BinaryMB     = $binaryMb
+        Label          = $Label
+        Run            = $i
+        Cold           = $i -eq 1
+        Ready          = $ready
+        StartupMs      = $startupMs
+        WorkingSetMB   = [math]::Round($proc.WorkingSet64 / 1MB, 1)
+        PrivateMemoryMB = [math]::Round($proc.PrivateMemorySize64 / 1MB, 1)
+        CpuPercent     = $cpuPercent
+        BinaryMB       = $binaryMb
+        BinaryFolderMB = $binaryFolderMb
     }
 
     $null = $proc.CloseMainWindow()
