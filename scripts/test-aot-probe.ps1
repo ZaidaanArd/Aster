@@ -21,11 +21,13 @@ if (-not (Test-Path $probe)) {
     throw "AOT probe executable not found."
 }
 
-$output = & $probe --allow-no-session
+# Windows PowerShell 5.1 can collapse native stdout into one string when a large
+# publish command precedes it, so match the marker instead of testing array items.
+$output = (& $probe --allow-no-session) -join "`n"
 if ($LASTEXITCODE -ne 0) {
     throw "AOT probe failed with exit code $LASTEXITCODE."
 }
-if ($output -notcontains "AOT_PROBE_OK") {
+if ($output -notmatch 'AOT_PROBE_OK') {
     throw "AOT probe did not report AOT_PROBE_OK."
 }
 

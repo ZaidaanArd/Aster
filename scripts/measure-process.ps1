@@ -47,7 +47,7 @@ for ($i = 1; $i -le $Runs; $i++) {
     $idleClock.Stop()
     $proc.Refresh()
     $cpuEnd = $proc.TotalProcessorTime.TotalSeconds
-    $cpuPercent = if ($idleClock.Elapsed.TotalSeconds -gt 0) {
+    $cpuPercent = if ($idleClock.Elapsed.TotalSeconds -ge 0.1) {
         [math]::Round((($cpuEnd - $cpuStart) / $idleClock.Elapsed.TotalSeconds) * 100, 2)
     } else { 0 }
 
@@ -67,8 +67,11 @@ for ($i = 1; $i -le $Runs; $i++) {
         BinaryFolderMB = $binaryFolderMb
     }
 
-    $null = $proc.CloseMainWindow()
-    if (-not $proc.WaitForExit(3000)) { $proc.Kill() }
+    if (-not $proc.HasExited) {
+        $null = $proc.CloseMainWindow()
+        if (-not $proc.WaitForExit(3000)) { $proc.Kill() }
+    }
+    Start-Sleep -Milliseconds 300
     Remove-Item $readyFile -ErrorAction SilentlyContinue
 }
 
