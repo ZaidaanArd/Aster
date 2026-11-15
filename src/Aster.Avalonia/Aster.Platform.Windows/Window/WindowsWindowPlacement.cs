@@ -48,7 +48,7 @@ public sealed class WindowsWindowPlacement
 
     public void SetBounds(IntPtr hwnd, int x, int y, int width, int height)
     {
-        if (!SetWindowPos(hwnd, IntPtr.Zero, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE))
+        if (!SetWindowPos(hwnd, IntPtr.Zero, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING))
         {
             _log.Warn("SetWindowPos failed.");
         }

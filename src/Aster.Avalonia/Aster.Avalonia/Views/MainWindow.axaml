@@ -6,6 +6,7 @@
         x:DataType="vm:ShellViewModel"
         Title="Aster Lab Avalonia"
         Width="300" Height="38"
+        MinWidth="0" MinHeight="0"
         WindowDecorations="None"
         TransparencyLevelHint="Transparent"
         Background="Transparent"
