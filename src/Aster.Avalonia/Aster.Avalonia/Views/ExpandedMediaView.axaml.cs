@@ -10,7 +10,16 @@ public partial class ExpandedMediaView : UserControl
     public event EventHandler? SettingsRequested;
     public event EventHandler? CloseRequested;
 
-    public ExpandedMediaView() => InitializeComponent();
+    public ExpandedMediaView()
+    {
+        InitializeComponent();
+
+        // The slider's Thumb handles pointer events, so the bubbling handlers in XAML
+        // never fired. Tunnel handlers with handledEventsToo keep IsSeeking and the
+        // seek command in sync with a real thumb drag.
+        SeekSlider.AddHandler(PointerPressedEvent, OnSeekPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
+        SeekSlider.AddHandler(PointerReleasedEvent, OnSeekReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
 
     private void OnSettingsClick(object? sender, RoutedEventArgs e) =>
         SettingsRequested?.Invoke(this, EventArgs.Empty);
