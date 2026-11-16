@@ -15,7 +15,7 @@ if ($LASTEXITCODE -ne 0) { throw "Core tests failed." }
 dotnet test src/Aster.Avalonia/Aster.Platform.Windows.Tests/Aster.Platform.Windows.Tests.csproj -c Release
 if ($LASTEXITCODE -ne 0) { throw "Platform tests failed." }
 
-dotnet test src/Aster.Avalonia/Aster.Avalonia.Tests/Aster.Avalonia.Tests.csproj -c Release
+dotnet test src/Aster.Avalonia/Aster.UI.Tests/Aster.UI.Tests.csproj -c Release
 if ($LASTEXITCODE -ne 0) { throw "Avalonia tests failed." }
 
 $aotProbeLog = & powershell -ExecutionPolicy Bypass -File scripts/test-aot-probe.ps1 2>&1

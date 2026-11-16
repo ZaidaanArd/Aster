@@ -1,12 +1,12 @@
 param(
-    [string]$Exe = "src/Aster.Avalonia/Aster.Avalonia/bin/Release/net10.0-windows10.0.19041.0/Aster.Avalonia.exe"
+    [string]$Exe = "src/Aster.Avalonia/Aster.Desktop.Windows/bin/Release/net10.0-windows10.0.19041.0/Aster.Avalonia.exe"
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
-dotnet build src/Aster.Avalonia/Aster.Avalonia/Aster.Avalonia.csproj -c Release
+dotnet build src/Aster.Avalonia/Aster.Desktop.Windows/Aster.Desktop.Windows.csproj -c Release
 if ($LASTEXITCODE -ne 0) { throw "Build failed." }
 
 $ready = Join-Path $env:TEMP ("aster-shell-" + [guid]::NewGuid().ToString("N") + ".ready")

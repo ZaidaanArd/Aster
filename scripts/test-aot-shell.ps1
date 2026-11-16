@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
-dotnet publish src/Aster.Avalonia/Aster.Avalonia/Aster.Avalonia.csproj `
+dotnet publish src/Aster.Avalonia/Aster.Desktop.Windows/Aster.Desktop.Windows.csproj `
   -c Release -r win-x64 --self-contained true `
   -p:PublishAot=true -p:PublishTrimmed=true -p:TrimMode=partial `
   -p:StripSymbols=true -p:InvariantGlobalization=false -p:DebugType=None `
