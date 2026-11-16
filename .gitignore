@@ -6,3 +6,13 @@ dist/
 *.suo
 *.log
 *.pdb
+
+# Local-only docs; only the Aster screenshots are tracked.
+docs/*
+!docs/aster-preview.png
+!docs/aster-settings.png
+
+target/
+
+artifacts/
+.codegraph/
