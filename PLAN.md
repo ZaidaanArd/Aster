@@ -1,7 +1,7 @@
 # Aster Cross-Platform — PLAN
 
 **Status:** Phase 0 (Windows) selesai dan **Avalonia GO**. Phase 1 **FAIL/waived** (Windows L2 belum lengkap; waiver terbuka). Phase 2 sedang berjalan: 2A Windows hardening **NOT RUN**, 2B Linux L2 **PARTIAL**. GPUI diarsipkan sebagai benchmark performa, bukan jalur produk.  
-**Branch aktif:** `phase-0`  
+**Branch aktif:** `phase-3-release` (PR #1, menunggu merge)  
 **Baseline:** Aster v0.10.0, commit `fcc6cb5`, MIT  
 **Tujuan:** Membangun Aster L2 lintas platform dengan Avalonia, memakai Rust hanya untuk bagian yang terbukti butuh.
 
@@ -46,7 +46,7 @@ Bukti lengkap: `docs/results/phase0-report.md`, `avalonia-hud.md`, `avalonia-aot
 - **Hard gate dulu, baru skor.** Fitur wajib tidak boleh diganti klaim atau stub.
 - **Performance target bersifat soft.** Sedikit di atas target tidak mendiskualifikasi selama produk nyaman dipakai.
 - **Tidak menyentuh WPF.** `src/DynamicIsland`, `DynamicIsland.sln`, dan `build.ps1` tetap utuh sebagai referensi dan regression baseline.
-- **Docs local-only.** Spesifikasi, rencana, hasil, dan screenshot tidak di-commit; hanya kode di `spike/` dan `scripts/` yang masuk Git.
+- **Docs local-only.** Spesifikasi, rencana, hasil, dan ADR tidak di-commit; dua screenshot `docs/aster-preview.png` dan `docs/aster-settings.png` adalah exception yang di-track.
 - **Bukti, bukan asumsi.** Setiap PASS punya screenshot, log, CSV, atau perintah yang bisa diulang.
 - **Rust hanya dengan alasan terukur.** Jangan port service ke Rust tanpa benchmark yang menunjukkan target soft tidak tercapai.
 
@@ -61,7 +61,7 @@ Bukti lengkap: `docs/results/phase0-report.md`, `avalonia-hud.md`, `avalonia-aot
 | **2A — Windows hardening** | 1 minggu | Media restart, soak/attribution, visual/DPI, Narrator, frame pacing | **NOT RUN** — butuh host Windows |
 | **2B — Linux L2** | 1–2 minggu | Shared UI, X11/XWayland, MPRIS, system adapters, AOT, soak | **PARTIAL** — core PASS; window no-activate, a11y, 60-min soak terbuka |
 | **2 — macOS** | deferred | Backend macOS | **NOT RUN/deferred**; entry criteria di spec |
-| **3 — Hardening & release** | 1 minggu | Soak, aksesibilitas, packaging, ADR final | Siap rilis; tidak ada regresi WPF |
+| **3 — Release engineering** | 1 minggu | CI, packaging AOT, draft release, README, ADR, gap register | **RELEASE CANDIDATE** — rc dry run inspected; final draft pending; gate Phase 2 terbuka dicatat, bukan PASS |
 
 Total perkiraan: **5–6 minggu**, tergantung ketersediaan macOS dan hasil gate Phase 1.
 
@@ -268,9 +268,9 @@ aster-avalonia/         # worktree aktif: spike/avalonia
 aster-gpui/             # arsip benchmark: spike/gpui (tidak dikembangkan)
 ```
 
-- Docs (`specs/`, `plans/`, `results/`, screenshots) local-only dan ignored.
+- Docs (`specs/`, `plans/`, `results/`, `adr/`) local-only; dua screenshot Avalonia di-track. Hanya kode/script/workflow/packaging/root docs yang di-commit.
 - Owner menyetujui `src/Aster.Avalonia/` sebagai lokasi kode Phase 1; commit Phase 1 boleh mencakup `src/Aster.Avalonia/` selain `spike/` dan `scripts/`.
-- Commit hanya kode/script di `spike/`, `scripts/`, atau `src/Aster.Avalonia/`.
+- Commit hanya kode/script di `spike/`, `scripts/`, `src/Aster.Avalonia/`, `.github/workflows/`, `packaging/`, dan root files `global.json`, `.gitattributes`, `CHANGELOG.md`, `THIRD-PARTY-NOTICES.txt`, `README.md`, `PLAN.md`.
 - Jangan commit `.gitignore` kecuali diminta.
 - Jangan commit `src/DynamicIsland`, `DynamicIsland.sln`, atau root build files.
 - Jangan jalankan perintah yang mengubah metadata worktree dari Windows; path `.git` worktree menunjuk path Linux.
@@ -305,9 +305,25 @@ aster-gpui/             # arsip benchmark: spike/gpui (tidak dikembangkan)
 
 ## 12. Langkah berikutnya
 
-1. Jalankan Phase 2A di host Windows: media restart, soak 60 menit + attribution, visual/DPI, Narrator, frame pacing; tutup waiver Phase 1.
-2. Selesaikan gate Linux yang masih PARTIAL: no-activate/click-through dengan input nyata di 125/150/200%, manual accessibility, X11 fullscreen, expanded-media metrics, dan soak 60 menit di sesi validasi khusus.
-3. Jalankan `scripts/verify-phase2.sh` dan `scripts/test-aot-linux.sh` di sesi validasi yang bersih; simpan CSV, log, dan screenshot.
-4. macOS tetap deferred sampai ada host dan spike MediaRemote/LaunchAgents.
+1. Merge PR #1 di `ZaidaanArd/Aster` setelah review. CI sudah hijau di fork pada commit yang sama.
+2. Jalankan gate Windows yang masih NOT RUN: media restart, soak 60 menit + attribution, visual/DPI, Narrator, frame pacing; tutup waiver Phase 1.
+3. Selesaikan gate Linux yang masih PARTIAL: click-through 125/150/200%, manual accessibility, X11 fullscreen, expanded-media metrics, dan soak 60 menit.
+4. Setelah merge, push tag `v0.11.0`, inspect draft, smoke archive Linux dan Windows, lalu publish manual.
+5. macOS tetap deferred sampai ada host dan spike MediaRemote/LaunchAgents.
 
-**Fokus sekarang adalah menutup gate Phase 2A dan PARTIAL Phase 2B dengan bukti, bukan menambah fitur.** Gate Windows Avalonia sudah terbukti di Phase 0; Phase 1 belum PASS dan tidak boleh diklaim PASS.
+**Fokus sekarang adalah menutup gate yang terbuka dengan bukti, bukan menambah fitur.** Gate Windows Avalonia sudah terbukti di Phase 0; Phase 1 belum PASS dan tidak boleh diklaim PASS.
+
+---
+
+## 13. Phase 3 — Release engineering
+
+Status: **RELEASE CANDIDATE** (2026-11-16). rc dry run inspected di fork; rilis final menunggu merge PR #1 di upstream dan publish manual.
+
+- Desain: `docs/specs/2026-11-16-aster-phase-3-design.md` (local-only).
+- Rencana: `docs/plans/2026-11-16-aster-phase-3.md` (local-only).
+- Artefak target: `Aster-0.11.0-win-x64.zip`, `Aster-0.11.0-linux-x64.tar.gz`.
+- Pipeline: `.github/workflows/ci.yml` (Linux/Windows build+test, Linux AOT smoke) dan `.github/workflows/release.yml` (guard, package, draft release).
+- Verifikasi: `docs/results/phase3-gap-register.md` (local-only).
+- Laporan: `docs/results/phase3-report.md` (local-only).
+- ADR: `docs/adr/0001-distribution-baseline.md` (local-only).
+- Klaim: portable preview, bukan L2 PASS. Gate Phase 2A dan gate Linux yang terbuka tetap tercatat.
