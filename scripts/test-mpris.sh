@@ -13,6 +13,11 @@ metadata=$(gdbus call --session --dest "$service" \
 echo "$metadata" | grep -q 'xesam:title' || { echo "No title in metadata"; exit 1; }
 echo "$metadata" | grep -q 'xesam:artist' || true
 
+if [ "${ASTER_MPRIS_READ_ONLY:-0}" = "1" ]; then
+    echo "MPRIS read probe PASS ($service; PlayPause skipped)"
+    exit 0
+fi
+
 status_before=$(gdbus call --session --dest "$service" \
   --object-path /org/mpris/MediaPlayer2 \
   --method org.freedesktop.DBus.Properties.Get \
