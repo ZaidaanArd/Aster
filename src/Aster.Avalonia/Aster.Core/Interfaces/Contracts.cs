@@ -11,6 +11,12 @@ public interface IMediaSession
     Task PreviousAsync(CancellationToken ct = default);
     Task SeekAsync(TimeSpan position, CancellationToken ct = default);
     TimeSpan EstimatedPosition(DateTimeOffset now);
+    void Start();
+}
+
+public interface ISingleInstance : IDisposable
+{
+    bool IsFirstInstance { get; }
 }
 
 public interface ISettingsStore

@@ -8,10 +8,10 @@ using Aster.Avalonia.Composition;
 using Aster.Avalonia.Platform;
 using Aster.Avalonia.Services;
 using Aster.Avalonia.ViewModels;
+using Aster.Core.Interfaces;
 using Aster.Core.Logic;
 using Aster.Core.Models;
 using Aster.Core.Settings;
-using Aster.Platform.Windows;
 using Aster.Platform.Windows.Media;
 using Aster.Platform.Windows.System;
 using Aster.Platform.Windows.Window;
@@ -35,7 +35,7 @@ public partial class MainWindow : Window
 
     public static Stopwatch StartupClock { get; } = Stopwatch.StartNew();
 
-    private readonly FileAppLog _log;
+    private readonly IAppLog _log;
     private readonly JsonSettingsStore _settings;
     private readonly ShellViewModel _state;
     private readonly WindowMotionController _motion;
@@ -44,7 +44,7 @@ public partial class MainWindow : Window
     private readonly TrayService? _tray;
     private readonly WindowsFullscreenWatcher _fullscreen;
     private readonly WindowsBatteryStatus _battery;
-    private readonly WindowsNetworkStatus _network;
+    private readonly Aster.Core.System.NetworkStatus _network;
     private readonly SmtcMediaSession _mediaSession;
     private readonly MediaViewModel _media;
     private readonly DispatcherTimer _clockTimer;
@@ -66,7 +66,7 @@ public partial class MainWindow : Window
 
         var dispatcher = new AvaloniaUiDispatcher();
         _battery = new WindowsBatteryStatus(dispatcher, _log);
-        _network = new WindowsNetworkStatus(dispatcher, _log);
+        _network = new Aster.Core.System.NetworkStatus(dispatcher, _log);
         _mediaSession = new SmtcMediaSession(dispatcher, _log);
         _media = new MediaViewModel(_mediaSession, dispatcher, _log);
         _state = new ShellViewModel(_battery, _network, _media);

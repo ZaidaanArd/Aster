@@ -3,7 +3,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Aster.Avalonia.Views;
-using Aster.Platform.Windows;
+using Aster.Core;
+using Aster.Core.Logging;
 
 namespace Aster.Avalonia;
 
@@ -27,9 +28,7 @@ public partial class App : Application
     {
         try
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            new FileAppLog(Path.Combine(appData, "AsterLab", "Avalonia", "logs", "app.log"))
-                .Error(message, exception);
+            new FileAppLog(AppPaths.LogPath).Error(message, exception);
         }
         catch
         {

@@ -1,10 +1,12 @@
-namespace Aster.Platform.Windows;
+using Aster.Core.Interfaces;
 
-public sealed class SingleInstance : IDisposable
+namespace Aster.Core.System;
+
+public sealed class MutexSingleInstance : ISingleInstance
 {
     private readonly Mutex _mutex;
 
-    public SingleInstance(string name)
+    public MutexSingleInstance(string name)
     {
         _mutex = new Mutex(initiallyOwned: true, name, out var createdNew);
         IsFirstInstance = createdNew;
@@ -22,7 +24,7 @@ public sealed class SingleInstance : IDisposable
             }
             catch (ApplicationException)
             {
-                // The mutex was already released.
+                // Already released.
             }
         }
 

@@ -1,6 +1,6 @@
 using Aster.Core.Interfaces;
 
-namespace Aster.Platform.Windows;
+namespace Aster.Core.Logging;
 
 public sealed class FileAppLog : IAppLog
 {

@@ -1,16 +1,16 @@
-using Aster.Platform.Windows;
+using Aster.Core.System;
 
-namespace Aster.Platform.Windows.Tests;
+namespace Aster.Core.Tests;
 
-public class SingleInstanceTests
+public class MutexSingleInstanceTests
 {
     [Fact]
     public void SecondInstanceIsNotFirst()
     {
         var name = "AsterTest-" + Guid.NewGuid().ToString("N");
 
-        using var first = new SingleInstance(name);
-        using var second = new SingleInstance(name);
+        using var first = new MutexSingleInstance(name);
+        using var second = new MutexSingleInstance(name);
 
         Assert.True(first.IsFirstInstance);
         Assert.False(second.IsFirstInstance);

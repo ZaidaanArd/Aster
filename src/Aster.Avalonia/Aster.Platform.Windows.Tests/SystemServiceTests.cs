@@ -1,3 +1,4 @@
+using Aster.Core.System;
 using Aster.Platform.Windows.System;
 
 namespace Aster.Platform.Windows.Tests;
@@ -16,7 +17,7 @@ public class SystemServiceTests
     [Fact]
     public void NetworkStatusReturnsBoolean()
     {
-        using var network = new WindowsNetworkStatus(new InlineDispatcher(), new NullLog());
+        using var network = new NetworkStatus(new InlineDispatcher(), new NullLog());
         _ = network.IsConnected;
     }
 

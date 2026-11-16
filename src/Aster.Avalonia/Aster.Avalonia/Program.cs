@@ -1,5 +1,5 @@
 using Avalonia;
-using Aster.Platform.Windows;
+using Aster.Core.System;
 
 namespace Aster.Avalonia;
 
@@ -8,7 +8,7 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        using var single = new SingleInstance("AsterLabAvalonia.SingleInstance");
+        using var single = new MutexSingleInstance("AsterLabAvalonia.SingleInstance");
         if (!single.IsFirstInstance)
         {
             return 1;

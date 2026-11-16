@@ -1,19 +1,25 @@
 using System.Net.NetworkInformation;
 using Aster.Core.Interfaces;
 
-namespace Aster.Platform.Windows.System;
+namespace Aster.Core.System;
 
-public sealed class WindowsNetworkStatus : INetworkStatus, IDisposable
+public sealed class NetworkStatus : INetworkStatus, IDisposable
 {
     private readonly IUiDispatcher _dispatcher;
     private readonly IAppLog _log;
     private readonly CancellationTokenSource _cts = new();
     private bool _current;
 
-    public WindowsNetworkStatus(IUiDispatcher dispatcher, IAppLog log)
+    public NetworkStatus(IUiDispatcher dispatcher, IAppLog log)
     {
         _dispatcher = dispatcher;
         _log = log;
+
+        if (Environment.GetEnvironmentVariable("ASTER_DISABLE_BACKGROUND_POLLING") == "1")
+        {
+            return;
+        }
+
         _ = LoopAsync(_cts.Token);
     }
 

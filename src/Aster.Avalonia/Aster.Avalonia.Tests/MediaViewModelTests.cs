@@ -52,6 +52,7 @@ public class MediaViewModelTests
         public Task PreviousAsync(CancellationToken ct = default) => Task.CompletedTask;
         public Task SeekAsync(TimeSpan position, CancellationToken ct = default) => Task.CompletedTask;
         public TimeSpan EstimatedPosition(DateTimeOffset now) => Current.Position;
+        public void Start() { }
     }
 
     private sealed class InlineDispatcher : IUiDispatcher
