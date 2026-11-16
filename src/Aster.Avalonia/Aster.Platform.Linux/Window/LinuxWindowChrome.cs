@@ -64,7 +64,9 @@ public sealed class LinuxWindowChrome : IWindowChrome
             atoms, atoms.Length);
 
         var typeAtom = X11Native.Atom("_NET_WM_WINDOW_TYPE");
-        var typeValue = new[] { X11Native.Atom("_NET_WM_WINDOW_TYPE_UTILITY") };
+        // DOCK is the Phase 2 fallback: KWin focused the UTILITY window on
+        // synthetic pill clicks during the 200% window probe.
+        var typeValue = new[] { X11Native.Atom("_NET_WM_WINDOW_TYPE_DOCK") };
         X11Native.XChangeProperty(
             display, handle, typeAtom,
             new IntPtr(X11Native.XaAtom), 32, X11Native.PropModeReplace,
