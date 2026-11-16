@@ -64,10 +64,14 @@ public sealed class LinuxAutostart : IAutostart
                 "dotnet",
                 StringComparison.OrdinalIgnoreCase))
         {
-            var entry = global::System.Reflection.Assembly.GetEntryAssembly()?.Location;
-            if (!string.IsNullOrWhiteSpace(entry))
+            var entryName = global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;
+            if (!string.IsNullOrWhiteSpace(entryName))
             {
-                return entry;
+                var entry = Path.Combine(AppContext.BaseDirectory, entryName + ".dll");
+                if (File.Exists(entry))
+                {
+                    return entry;
+                }
             }
         }
 
