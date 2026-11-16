@@ -1,0 +1,152 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Check tag and version
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          version="$(dotnet msbuild src/Aster.Avalonia/Aster.UI/Aster.UI.csproj -getProperty:Version)"
+          base="${version%%-*}"
+          expected="v${base}"
+          if [[ "$tag" == "${expected}-rc."* ]]; then
+            suffix="${tag#"${expected}-rc."}"
+            [[ "$suffix" =~ ^[0-9]+$ ]] || { echo "tag $tag is not a valid -rc.N tag"; exit 1; }
+          else
+            [[ "$tag" == "v${version}" ]] || { echo "tag $tag does not match version $version"; exit 1; }
+          fi
+          git fetch origin main --quiet
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "tag commit is not on main"; exit 1; }
+
+  verify:
+    needs: guard
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  package-windows:
+    needs: [guard, verify]
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+      - name: Package
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -Version "${{ steps.version.outputs.version }}" -Output artifacts/release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Aster-${{ steps.version.outputs.version }}-win-x64
+          path: artifacts/release/*.zip
+          if-no-files-found: error
+          overwrite: true
+
+  package-linux:
+    needs: [guard, verify]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Install AOT and X11 dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev xvfb xauth dbus
+      - name: Resolve version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Package and smoke
+        run: ./scripts/package-linux.sh "${{ steps.version.outputs.version }}" artifacts/release --smoke
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Aster-${{ steps.version.outputs.version }}-linux-x64
+          path: artifacts/release/*.tar.gz
+          if-no-files-found: error
+          overwrite: true
+
+  release:
+    needs: [guard, package-windows, package-linux]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 'Aster-*'
+          merge-multiple: true
+          path: dist
+      - name: Checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          ls -l
+          tag="$GITHUB_REF_NAME"
+          test -s "Aster-${tag#v}-win-x64.zip"
+          test -s "Aster-${tag#v}-linux-x64.tar.gz"
+          test "$(ls -1 *.zip | wc -l)" -eq 1
+          test "$(ls -1 *.tar.gz | wc -l)" -eq 1
+          sha256sum *.zip *.tar.gz > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Release notes
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          if [[ "$version" == *-* ]]; then
+            printf '> Pre-release dry run for %s. Do not publish.\n\n' "$version" > release-notes.md
+          else
+            : > release-notes.md
+          fi
+          scripts/extract-changelog.sh "$version" >> release-notes.md
+          test -s release-notes.md
+      - name: Create or update draft
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          assets=(dist/*.zip dist/*.tar.gz dist/SHA256SUMS)
+          prerelease=()
+          [[ "$tag" == *-* ]] && prerelease=(--prerelease)
+          if gh release view "$tag" >/dev/null 2>&1; then
+            draft="$(gh release view "$tag" --json isDraft --jq .isDraft)"
+            if [ "$draft" != "true" ]; then
+              echo "release $tag is already published"
+              exit 1
+            fi
+            gh release upload "$tag" "${assets[@]}" --clobber
+            gh release edit "$tag" --notes-file release-notes.md "${prerelease[@]}"
+          else
+            gh release create "$tag" --draft --title "Aster $tag" --notes-file release-notes.md "${prerelease[@]}" "${assets[@]}"
+          fi
