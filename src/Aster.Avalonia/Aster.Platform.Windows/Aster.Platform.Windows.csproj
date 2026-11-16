@@ -6,6 +6,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Win32" Version="12.1.6" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Aster.Core\Aster.Core.csproj" />
+    <ProjectReference Include="..\Aster.UI.Abstractions\Aster.UI.Abstractions.csproj" />
   </ItemGroup>
 </Project>

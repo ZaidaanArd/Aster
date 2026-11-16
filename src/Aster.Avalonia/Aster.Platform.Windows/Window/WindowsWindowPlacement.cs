@@ -1,11 +1,12 @@
 using Aster.Core.Interfaces;
+using Aster.UI.Abstractions;
 using static Aster.Platform.Windows.Window.NativeMethods;
 
 namespace Aster.Platform.Windows.Window;
 
 public readonly record struct MonitorRect(int Left, int Top, int Width, int Height);
 
-public sealed class WindowsWindowPlacement
+public sealed class WindowsWindowPlacement : IWindowPlacement
 {
     private readonly IAppLog _log;
 

@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="using:Avalonia.Automation"
+        xmlns:converters="using:Avalonia.Data.Converters"
+        xmlns:vm="using:Aster.UI.ViewModels"
+        x:Class="Aster.UI.Views.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Title="Aster Lab Avalonia - Settings"
+        Width="740" Height="580"
+        CanResize="False"
+        WindowStartupLocation="Manual"
+        KeyDown="OnKeyDown"
+        Background="#F2070708">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="28">
+    <StackPanel Spacing="4">
+      <TextBlock Text="Settings" Foreground="#F5F4F0" FontSize="22" FontWeight="SemiBold" />
+      <TextBlock Text="{Binding Warning}" Foreground="#E0A040" FontSize="12" IsVisible="{Binding Warning, Converter={x:Static converters:ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1" Spacing="18" Margin="0,28,0,0" IsEnabled="{Binding CanSave}">
+      <CheckBox Content="{Binding AutostartLabel}" IsChecked="{Binding StartWithWindows, Mode=TwoWay}"
+                automation:AutomationProperties.Name="{Binding AutostartLabel}"
+                automation:AutomationProperties.HelpText="Start Aster Lab Avalonia when you sign in." />
+      <CheckBox Content="Minimal notch" IsChecked="{Binding MinimalNotch, Mode=TwoWay}"
+                automation:AutomationProperties.Name="Minimal notch"
+                automation:AutomationProperties.HelpText="Show only a small blank notch." />
+      <CheckBox Content="Hide in fullscreen" IsChecked="{Binding HideInFullscreen, Mode=TwoWay}"
+                automation:AutomationProperties.Name="Hide in fullscreen"
+                automation:AutomationProperties.HelpText="Hide the island while a fullscreen app is active." />
+      <CheckBox Content="Glass background" IsChecked="{Binding GlassBackground, Mode=TwoWay}"
+                automation:AutomationProperties.Name="Glass background"
+                automation:AutomationProperties.HelpText="Use the glass gradient instead of a solid background." />
+      <CheckBox Content="Bouncy spring" IsChecked="{Binding BouncySpring, Mode=TwoWay}"
+                automation:AutomationProperties.Name="Bouncy spring"
+                automation:AutomationProperties.HelpText="Use the bouncy damping for expand and collapse." />
+    </StackPanel>
+
+    <Button Grid.Row="2" Content="Close" HorizontalAlignment="Right" Click="OnCloseClick" />
+  </Grid>
+</Window>
