@@ -1,0 +1,112 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-build-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore src/Aster.Avalonia/Aster.Avalonia.sln -p:EnableWindowsTargeting=true
+      - name: Build
+        run: dotnet build src/Aster.Avalonia/Aster.Avalonia.sln -c Release --no-restore -p:EnableWindowsTargeting=true
+      - name: Test Core
+        run: dotnet test src/Aster.Avalonia/Aster.Core.Tests/Aster.Core.Tests.csproj -c Release --no-build
+      - name: Test UI
+        run: dotnet test src/Aster.Avalonia/Aster.UI.Tests/Aster.UI.Tests.csproj -c Release --no-build
+      - name: Test Linux platform
+        run: dotnet test src/Aster.Avalonia/Aster.Platform.Linux.Tests/Aster.Platform.Linux.Tests.csproj -c Release --no-build
+
+  windows-build-test:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore src/Aster.Avalonia/Aster.Avalonia.sln
+      - name: Build
+        run: dotnet build src/Aster.Avalonia/Aster.Avalonia.sln -c Release --no-restore
+      - name: Test Core
+        run: dotnet test src/Aster.Avalonia/Aster.Core.Tests/Aster.Core.Tests.csproj -c Release --no-build
+      - name: Test UI
+        run: dotnet test src/Aster.Avalonia/Aster.UI.Tests/Aster.UI.Tests.csproj -c Release --no-build
+      - name: Test Windows platform
+        run: dotnet test src/Aster.Avalonia/Aster.Platform.Windows.Tests/Aster.Platform.Windows.Tests.csproj -c Release --no-build
+
+  linux-aot-smoke:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Install AOT and X11 dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev xvfb xauth dbus
+      - name: Publish AOT
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/linux-aot
+          dotnet publish src/Aster.Avalonia/Aster.Desktop.Linux/Aster.Desktop.Linux.csproj \
+            -c Release -r linux-x64 --self-contained true \
+            -p:PublishAot=true -p:PublishTrimmed=true -p:TrimMode=partial \
+            -p:StripSymbols=true -p:InvariantGlobalization=false \
+            -p:DebugType=None -p:CopyOutputSymbolsToPublishDirectory=false \
+            -o artifacts/linux-aot 2>&1 | tee artifacts/linux-aot.log
+          if grep -Eq 'IL2[0-9]{3}|IL3[0-9]{3}' artifacts/linux-aot.log; then
+            echo "trim warning in AOT publish"
+            exit 1
+          fi
+      - name: Assert native libraries
+        run: |
+          test -x artifacts/linux-aot/Aster.Avalonia
+          test -f artifacts/linux-aot/libSkiaSharp.so
+          test -f artifacts/linux-aot/libHarfBuzzSharp.so
+      - name: Launch smoke
+        run: |
+          set -euo pipefail
+          ready="$(mktemp)"
+          rm -f "$ready"
+          exe="$PWD/artifacts/linux-aot/Aster.Avalonia"
+          (
+            cd artifacts/linux-aot
+            ASTER_READY_FILE="$ready" exec setsid dbus-run-session -- xvfb-run -a "$exe" >/tmp/aster-aot.log 2>&1
+          ) &
+          pid=$!
+          for _ in $(seq 1 200); do
+            [ -f "$ready" ] && break
+            kill -0 "$pid" 2>/dev/null || break
+            sleep 0.1
+          done
+          if [ ! -f "$ready" ]; then
+            cat /tmp/aster-aot.log || true
+            kill -- -"$pid" 2>/dev/null || true
+            exit 1
+          fi
+          kill -- -"$pid" 2>/dev/null || true
+          wait "$pid" 2>/dev/null || true
+          if pgrep -f "$exe" >/dev/null 2>&1; then
+            pkill -f "$exe" 2>/dev/null || true
+            echo "AOT smoke leaked a process"
+            exit 1
+          fi
