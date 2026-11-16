@@ -10,13 +10,8 @@ dbus-run-session -- bash -c '
 set -euo pipefail
 python3 tools/fake-mpris-player.py >/tmp/fake-mpris.log 2>&1 &
 fake=$!
+trap "kill $fake 2>/dev/null || true" EXIT
 sleep 1
-ready=$(mktemp)
-ASTER_READY_FILE="$ready" "$ASTER_EXE" >/tmp/aster-fake-media.log 2>&1 &
-app=$!
-trap "kill $app $fake 2>/dev/null || true" EXIT
-for _ in $(seq 1 150); do [ -f "$ready" ] && break; sleep 0.1; done
-[ -f "$ready" ] || { cat /tmp/aster-fake-media.log; exit 1; }
 
 gdbus call --session --dest org.mpris.MediaPlayer2.FakePlayer \
   --object-path /org/mpris/MediaPlayer2 \
