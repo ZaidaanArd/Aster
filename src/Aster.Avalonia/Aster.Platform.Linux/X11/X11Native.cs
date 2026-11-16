@@ -81,6 +81,27 @@ internal static class X11Native
     public static extern int XSetWMHints(
         IntPtr display, IntPtr window, ref XWMHints hints);
 
+    [DllImport(Lib)]
+    public static extern IntPtr XDefaultRootWindow(IntPtr display);
+
+    [DllImport(Lib)]
+    public static extern int XGetWindowProperty(
+        IntPtr display,
+        IntPtr window,
+        IntPtr property,
+        long longOffset,
+        long longLength,
+        bool delete,
+        IntPtr requiredType,
+        out IntPtr actualType,
+        out int actualFormat,
+        out IntPtr nitems,
+        out IntPtr bytesAfter,
+        out IntPtr prop);
+
+    [DllImport(Lib)]
+    public static extern int XFree(IntPtr data);
+
     [StructLayout(LayoutKind.Sequential)]
     public struct XWMHints
     {
@@ -101,4 +122,45 @@ internal static class X11Native
 
     public static IntPtr Atom(string name) =>
         Display == IntPtr.Zero ? IntPtr.Zero : XInternAtom(Display, name, false);
+
+    public static IntPtr[] ReadAtoms(IntPtr window, string property)
+    {
+        var display = Display;
+        if (display == IntPtr.Zero || window == IntPtr.Zero) return Array.Empty<IntPtr>();
+
+        var result = XGetWindowProperty(
+            display, window, Atom(property), 0, 1024, false,
+            new IntPtr(XaAtom), out _, out _, out var count, out _, out var data);
+        if (result != 0 || data == IntPtr.Zero) return Array.Empty<IntPtr>();
+
+        try
+        {
+            var length = count.ToInt64();
+            var atoms = new IntPtr[length];
+            Marshal.Copy(data, atoms, 0, (int)length);
+            return atoms;
+        }
+        finally
+        {
+            XFree(data);
+        }
+    }
+
+    public static IntPtr ReadWindow(IntPtr window, string property)
+    {
+        var display = Display;
+        if (display == IntPtr.Zero) return IntPtr.Zero;
+        var result = XGetWindowProperty(
+            display, window, Atom(property), 0, 1, false,
+            new IntPtr(33), out _, out _, out var count, out _, out var data);
+        if (result != 0 || data == IntPtr.Zero || count == IntPtr.Zero) return IntPtr.Zero;
+        try
+        {
+            return Marshal.ReadIntPtr(data);
+        }
+        finally
+        {
+            XFree(data);
+        }
+    }
 }

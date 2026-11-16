@@ -30,12 +30,12 @@ public sealed class LinuxPlatformFactory : IPlatformFactory
     public IMediaSession CreateMediaSession(IUiDispatcher dispatcher, IAppLog log) =>
         new MprisMediaSession(new DBusMprisClient(), dispatcher, log);
     public IBatteryStatus CreateBatteryStatus(IUiDispatcher dispatcher, IAppLog log) =>
-        new NoBatteryStatus();
+        new LinuxBatteryStatus(null, dispatcher, log);
     public INetworkStatus CreateNetworkStatus(IUiDispatcher dispatcher, IAppLog log) =>
         new NetworkStatus(dispatcher, log);
-    public IAutostart CreateAutostart(IAppLog log) => new NoAutostart();
+    public IAutostart CreateAutostart(IAppLog log) => new LinuxAutostart();
     public IFullscreenWatcher CreateFullscreenWatcher(IUiDispatcher dispatcher, IAppLog log) =>
-        new NoFullscreenWatcher();
+        new LinuxFullscreenWatcher(dispatcher, log);
     public IWindowPlacement CreateWindowPlacement(IAppLog log) =>
         _useX11 ? new LinuxWindowPlacement(log) : new NoopWindowPlacement();
     public IWindowChrome CreateWindowChrome(IAppLog log) =>
