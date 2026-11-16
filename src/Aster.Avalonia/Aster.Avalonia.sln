@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aster.Platform.Linux", "Ast
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aster.Desktop.Linux", "Aster.Desktop.Linux\Aster.Desktop.Linux.csproj", "{905268B8-1A72-47AB-8621-0125A7E47AE3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aster.Platform.Linux.Tests", "Aster.Platform.Linux.Tests\Aster.Platform.Linux.Tests.csproj", "{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -169,6 +171,18 @@ Global
 		{905268B8-1A72-47AB-8621-0125A7E47AE3}.Release|x64.Build.0 = Release|Any CPU
 		{905268B8-1A72-47AB-8621-0125A7E47AE3}.Release|x86.ActiveCfg = Release|Any CPU
 		{905268B8-1A72-47AB-8621-0125A7E47AE3}.Release|x86.Build.0 = Release|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Debug|x64.Build.0 = Debug|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Debug|x86.Build.0 = Debug|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Release|x64.ActiveCfg = Release|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Release|x64.Build.0 = Release|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Release|x86.ActiveCfg = Release|Any CPU
+		{0E5D8470-E3C2-4A72-A2EE-8CCCBBE32D7A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

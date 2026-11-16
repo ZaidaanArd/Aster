@@ -28,7 +28,7 @@ public sealed class LinuxPlatformFactory : IPlatformFactory
     public ISettingsStore CreateSettingsStore(IAppLog log) =>
         new JsonSettingsStore(AppPaths.SettingsPath, log);
     public IMediaSession CreateMediaSession(IUiDispatcher dispatcher, IAppLog log) =>
-        new EmptyMediaSession();
+        new MprisMediaSession(new DBusMprisClient(), dispatcher, log);
     public IBatteryStatus CreateBatteryStatus(IUiDispatcher dispatcher, IAppLog log) =>
         new NoBatteryStatus();
     public INetworkStatus CreateNetworkStatus(IUiDispatcher dispatcher, IAppLog log) =>
