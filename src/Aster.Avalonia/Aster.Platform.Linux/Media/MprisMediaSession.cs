@@ -31,7 +31,7 @@ public sealed class MprisMediaSession : IMediaSession, IDisposable
     {
         if (_started) return;
         _started = true;
-        _ = LoopAsync(_cts.Token);
+        _ = Task.Run(() => LoopAsync(_cts.Token));
     }
 
     public TimeSpan EstimatedPosition(DateTimeOffset now) =>
@@ -40,22 +40,22 @@ public sealed class MprisMediaSession : IMediaSession, IDisposable
     public async Task PlayPauseAsync(CancellationToken ct = default)
     {
         if (_selected is null) return;
-        await _client.PlayPauseAsync(_selected.BusName, ct);
-        await RefreshAsync(ct);
+        await _client.PlayPauseAsync(_selected.BusName, ct).ConfigureAwait(false);
+        await RefreshAsync(ct).ConfigureAwait(false);
     }
 
     public async Task NextAsync(CancellationToken ct = default)
     {
         if (_selected is null) return;
-        await _client.NextAsync(_selected.BusName, ct);
-        await RefreshAsync(ct);
+        await _client.NextAsync(_selected.BusName, ct).ConfigureAwait(false);
+        await RefreshAsync(ct).ConfigureAwait(false);
     }
 
     public async Task PreviousAsync(CancellationToken ct = default)
     {
         if (_selected is null) return;
-        await _client.PreviousAsync(_selected.BusName, ct);
-        await RefreshAsync(ct);
+        await _client.PreviousAsync(_selected.BusName, ct).ConfigureAwait(false);
+        await RefreshAsync(ct).ConfigureAwait(false);
     }
 
     public async Task SeekAsync(TimeSpan position, CancellationToken ct = default)
@@ -66,16 +66,16 @@ public sealed class MprisMediaSession : IMediaSession, IDisposable
         try
         {
             await _client.SetPositionAsync(
-                selected.BusName, selected.Metadata.TrackId, target, ct);
+                selected.BusName, selected.Metadata.TrackId, target, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             _log.Warn($"SetPosition failed; falling back to Seek: {ex.Message}");
             var offset = target - selected.Position;
-            await _client.SeekAsync(selected.BusName, offset, ct);
+            await _client.SeekAsync(selected.BusName, offset, ct).ConfigureAwait(false);
         }
 
-        await RefreshAsync(ct);
+        await RefreshAsync(ct).ConfigureAwait(false);
     }
 
     private async Task LoopAsync(CancellationToken ct)
@@ -84,7 +84,7 @@ public sealed class MprisMediaSession : IMediaSession, IDisposable
         {
             try
             {
-                await RefreshAsync(ct);
+                await RefreshAsync(ct).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -93,7 +93,7 @@ public sealed class MprisMediaSession : IMediaSession, IDisposable
 
             try
             {
-                await Task.Delay(1000, ct);
+                await Task.Delay(1000, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -104,11 +104,11 @@ public sealed class MprisMediaSession : IMediaSession, IDisposable
 
     private async Task RefreshAsync(CancellationToken ct)
     {
-        var names = await _client.ListPlayersAsync(ct);
+        var names = await _client.ListPlayersAsync(ct).ConfigureAwait(false);
         var states = new List<MprisPlayerState>();
         foreach (var name in names)
         {
-            var state = await _client.GetStateAsync(name, ct);
+            var state = await _client.GetStateAsync(name, ct).ConfigureAwait(false);
             if (state is null) continue;
             states.Add(state);
 
@@ -143,7 +143,7 @@ public sealed class MprisMediaSession : IMediaSession, IDisposable
         {
             _artKey = trackKey;
             _artBytes = null;
-            var bytes = await LinuxArtworkReader.ReadAsync(selected.Metadata.ArtUrl, ct);
+            var bytes = await LinuxArtworkReader.ReadAsync(selected.Metadata.ArtUrl, ct).ConfigureAwait(false);
             _artBytes = bytes;
         }
 
