@@ -1,6 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The window probe launches the app, drives X11 focus checks, and takes a
+# screenshot. It is the slowest manual probe; skip it for quick iterations.
+run_window=1
+for arg in "$@"; do
+    case "$arg" in
+        --skip-window|--skip-window-probe) run_window=0 ;;
+        --with-window) run_window=1 ;;
+        -h|--help)
+            echo "usage: $0 [--skip-window]"
+            exit 0
+            ;;
+        *) echo "unknown option: $arg"; exit 2 ;;
+    esac
+done
+if [ "${ASTER_SKIP_WINDOW_PROBE:-0}" = "1" ]; then
+    run_window=0
+fi
+
 export DOTNET_ROOT="$HOME/.dotnet"
 export PATH="$HOME/.dotnet:$PATH"
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -14,8 +32,13 @@ dotnet test src/Aster.Avalonia/Aster.Platform.Linux.Tests/Aster.Platform.Linux.T
 dotnet build src/Aster.Avalonia/Aster.Desktop.Linux/Aster.Desktop.Linux.csproj -c Release
 exe="src/Aster.Avalonia/Aster.Desktop.Linux/bin/Release/net10.0/Aster.Avalonia"
 
-window="PASS"
-scripts/test-window-shell.sh "$exe" || window="PARTIAL"
+window="NOT RUN"
+if [ "$run_window" = "1" ]; then
+    window="PASS"
+    scripts/test-window-shell.sh "$exe" || window="PARTIAL"
+else
+    echo "Window probe skipped (--skip-window)."
+fi
 
 scripts/test-single-instance.sh "$exe"
 scripts/test-linux-settings.sh "$exe"
